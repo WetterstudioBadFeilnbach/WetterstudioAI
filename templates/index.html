@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ titel }}</title>
+<link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/static/css/style.css">
+ 
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+</head>
+
+<body>
+<div id="top"></div>
+<audio id="alarmSound" preload="auto">
+    <source src="/static/audio/alarm.mp3" type="audio/mpeg">
+</audio>
+
+<div id="alarmPopup" class="alarm-popup">
+
+
+    <div class="alarm-title">
+        🚨 Neue Unwetterwarnung
+    </div>
+
+    <div id="alarmText">
+        Neue Warnung erkannt.
+    </div>
+
+</div>
+<header>
+    <h1>🌩 Wetterstudio Bad Feilnbach AI</h1>
+    <p>Die moderne Wetterplattform für Bayern und Deutschland</p>
+</header>
+
+<nav>
+    <a href="#top">🏠 Start</a>
+    <a href="#stormtracker">🌩 Stormtracker AI</a>
+    <a href="#deutschlandkarte">🗺 Deutschlandkarte</a>
+    <a href="#radar">📡 Radar</a>
+    <a href="#warnungen">⚠ Warnungen</a>
+    <a href="#tornado-center">🌪 Tornado-Center</a>
+    <a href="#community">📷 Community</a>
+    
+</nav>
+<button id="alarm-test" class="alarm-test-button">
+    🔔 Alarm testen
+</button>
+<div class="live-ticker">
+
+    <span class="ticker-title">🚨 DWD LIVE</span>
+
+    <div id="warnTicker">
+        Lade DWD-Warnungen...
+    </div>
+
+</div>
+
+<div class="info-ticker">
+
+    <span class="ticker-title">📰 Wetterstudio AI</span>
+
+    <div id="infoTicker">
+        {{ ticker_info }}
+    </div>
+
+</div>
+
+<main>
+<section class="beta-box">
+
+    <div class="beta-header">
+        🚧 Wetterstudio Bad Feilnbach AI – <strong>Version 0.9 Beta</strong>
+        <span class="beta-badge">🟢 Beta 0.9</span>
+    </div>
+
+    <p>
+        Herzlich willkommen im neuen Wetterstudio Bad Feilnbach AI!
+        Diese Plattform befindet sich aktuell in der öffentlichen Testphase.
+        Viele Funktionen stehen bereits zur Verfügung – weitere folgen in den nächsten Updates.
+    </p>
+
+    <h3>✅ Bereits verfügbar</h3>
+
+    <ul>
+    <li>🌩 DWD-Warnungen</li>
+    <li>🗺 Deutschlandkarte</li>
+    <li>📡 Live-Radar</li>
+    <li>🌡 Live-Wetterdaten</li>
+    <li>💨 Wind & Windböen</li>
+    <li>🌧 Niederschlag</li>
+    <li>💧 Luftfeuchtigkeit</li>
+    <li>📈 Luftdruck</li>
+    <li>🌡 Gefühlte Temperatur</li>
+    <li>🌤 Live-Wettertext</li>
+    <li>🎨 Wetter-Icons</li>
+    <li>📢 Live-DWD-Ticker</li>
+    <li>📰 Wetterstudio-AI-Laufzeile</li>
+    <li>🚨 Alarmfunktion</li>
+    <li>🔊 Alarmton</li>
+    <li>🌪 Tornado-Center</li>
+    <li>📝 Beta-Feedback</li>
+    <li>📊 Entwicklungsbalken</li>
+</ul>
+
+    <h3>🚧 In Entwicklung</h3>
+
+<ul>
+    <li>🗣 Sprachansagen für neue DWD-Warnungen</li>
+    <li>🔊 Alarm-Einstellungen (Ton / Sprache)</li>
+    <li>📖 Verbesserte Warnungs-Legende</li>
+    <li>🌩 Stormtracker AI</li>
+    <li>🗺 Wetterkarten-Generator</li>
+    <li>🤖 KI-Wetterberichte</li>
+    <li>📺 TV-Modus</li>
+    <li>⭐ Favoriten</li>
+    <li>📱 Smartphone-Version</li>
+    <li>📸 Community-Wetterfotos</li>
+    <li>⚡ Live-Blitzkarte</li>
+    <li>🌪 Tornado-Livekarte</li>
+    <li>📊 Tornado-Statistiken</li>
+    <li>🛰 Satellitenbilder</li>
+    <li>🌧 Niederschlagsradar</li>
+    <li>⛈ Unwetter-Prognosen</li>
+    <li>📅 3-, 7- und 14-Tage-Trend</li>
+    <li>🌡 Hitze- und Kältewarnungen</li>
+    <li>📍 Persönliche Lieblingsorte</li>
+</ul>
+
+    <h3>📈 Entwicklungsstand</h3>
+
+    <div class="progress">
+    <div
+    id="progressBar"
+    class="progress-bar"
+    data-prozent="{{ entwicklung }}"
+>
+    {{ entwicklung }} %
+</div>
+    </div>
+<h3>🗺️ Entwicklungs-Roadmap</h3>
+
+<div class="roadmap">
+
+    <div class="roadmap-item done">
+        <span>✅ Version 0.9 Beta</span>
+        <small>Grundsystem fertig</small>
+    </div>
+
+    <div class="roadmap-item work">
+        <span>🚧 Version 0.9.1</span>
+        <small>Alarmfunktion & Alarmtöne</small>
+    </div>
+
+    <div class="roadmap-item plan">
+        <span>⭐ Version 0.9.2</span>
+        <small>Wetterkarten-Generator</small>
+    </div>
+
+    <div class="roadmap-item plan">
+        <span>🤖 Version 0.9.3</span>
+        <small>KI-Wetterberichte</small>
+    </div>
+
+    <div class="roadmap-item finish">
+        <span>🎉 Version 1.0</span>
+        <small>Offizielle Veröffentlichung</small>
+    </div>
+
+</div>
+   <h3>🚀 Nach der Beta geht es weiter!</h3>
+
+<p>
+    Das Wetterstudio Bad Feilnbach AI wird kontinuierlich erweitert.
+    Geplant sind unter anderem intelligente KI-Wetterberichte,
+    ein professioneller Wetterkarten-Generator, Stormtracker AI,
+    Live-Blitzdaten, Tornado-Analysen, Satellitenbilder,
+    Wetterstatistiken sowie viele weitere Funktionen für
+    Wetterinteressierte und Stormchaser.
+</p>
+
+<p>
+    💬 Fehler gefunden oder eine Idee?
+    Wir freuen uns über jedes Feedback unserer Beta-Tester.
+</p>
+
+<p>
+    ❤️ Vielen Dank an alle Beta-Tester für eure Unterstützung
+    und viel Freude mit der öffentlichen Beta 0.9!
+</p>
+
+</section>
+<section id="warnungen" class="live-dashboard">
+<div class="card">
+    <h2>📍 Ort</h2>
+    <h3 id="ort">--</h3>
+</div>
+<div class="card">
+<h2>🌡 Temperatur</h2>
+<h3 id="temperatur">{{ temperatur }}</h3>
+</div>
+<div class="card">
+    <h2>🌤 Wetter</h2>
+
+    <div id="wettericon"
+         style="font-size:70px;margin-top:10px;margin-bottom:10px;">
+        ☀️
+    </div>
+
+    <h3 id="wettertext">{{ wettertext }}</h3>
+
+</div>
+<div class="card">
+<h2>💨 Wind</h2>
+<h3 id="wind">{{ wind }}</h3>
+</div>
+<div class="card">
+<h2>💨 Windböen</h2>
+<h3 id="boeen">{{ boeen }}</h3>
+</div>
+<div class="card">
+<h2>🌧 Niederschlag</h2>
+<h3 id="regen">{{ regen }}</h3>
+</div>
+<div class="card">
+<h2>📈 Luftdruck</h2>
+<h3 id="luftdruck">{{ luftdruck }}</h3>
+</div>
+<div class="card">
+<h2>💧 Luftfeuchtigkeit</h2>
+<h3 id="luftfeuchte">{{ luftfeuchte }}</h3>
+</div>
+
+<div class="card">
+<h2>🌡️ Gefühlte Temperatur</h2>
+<h3 id="gefuehlt">{{ gefuehlt }}</h3>
+</div>
+<div class="card">
+<h2>⚠ Warnungen</h2>
+<h3>{{ warnungen }}</h3>
+</div>
+<div class="card">
+<h2>🟡 Gelbe Warnungen</h2>
+<h3>{{ gelb }}</h3>
+</div>
+<div class="card">
+<h2>🟠 Orange Warnungen</h2>
+<h3>{{ orange }}</h3>
+</div>
+<div class="card">
+<h2>🔴 Rote Warnungen</h2>
+<h3>{{ rot }}</h3>
+</div>
+<div class="card">
+<h2>🟣 Violette Warnungen</h2>
+<h3>{{ violett }}</h3>
+</div>
+<div class="card">
+<h2>🌩 Gewitter</h2>
+<h3>{{ gewitter }}</h3>
+</div>
+
+<div class="card">
+<h2>🌪 Tornados</h2>
+<h3>{{ tornados }}</h3>
+</div>
+<div class="card">
+<h2>🌨 Schnee</h2>
+<h3>{{ schnee }}</h3>
+</div>
+<div class="card">
+<h2>🌡 Hitze</h2>
+<h3>{{ hitze }}</h3>
+</div>
+<div class="card">
+<h2>💨 Sturm</h2>
+<h3>{{ sturm }}</h3>
+</div>
+<div class="card">
+<h2>🌧 Starkregen</h2>
+<h3>{{ starkregen }}</h3>
+</div>
+</section>
+
+<section id="stormtracker" class="dashboard">
+    <div class="card">
+        <h2>🌩 Stormtracker AI</h2>
+        <p>Live-Warnungen und automatische Analyse.</p>
+    </div>
+</section>
+
+<section id="deutschlandkarte" class="map-section">
+    <div class="card map-card">
+        <h2>🗺 Deutschlandkarte</h2>
+
+        <div class="such-container">
+            <input
+                type="text"
+                id="landkreisSuche"
+                placeholder="🔍 Landkreis suchen..."
+                autocomplete="off">
+
+            <div id="suchErgebnisse"></div>
+        </div>
+
+        <div id="deutschlandkarte"></div>
+    </div>
+</section>
+
+<section id="radar" class="map-section">
+    <div class="card">
+        <h2>🛰 Radar</h2>
+
+        <div id="radar-container">
+            <img id="radarbild"
+                 src=""
+                 alt="Radar"
+                 width="100%">
+        </div>
+    </div>
+
+
+   
+
+  
+
+
+   <section id="community">
+    <section id="tornado-center" class="content-section">
+
+    <h2>🌪 Tornado-Center</h2>
+
+    <div class="coming-soon-card">
+
+        <h3>🚧 In Entwicklung</h3>
+
+        <p>
+            Dieser Bereich wird Bestandteil der öffentlichen Beta 0.9.
+        </p>
+
+        <div class="tornado-grid">
+
+            <div class="placeholder-card">
+                <h4>🌪 DWD-Tornadowarnungen</h4>
+                <p>Live-Anzeige geplanter Warnungen.</p>
+               {% if tornado_warnungen %}
+
+<ul class="tornado-list">
+
+{% for warnung in tornado_warnungen %}
+
+<li>
+<strong>{{ warnung.regionName if warnung.regionName else warnung.headline }}</strong><br>
+{{ warnung.event }}
+</li>
+
+{% endfor %}
+
+</ul>
+
+{% else %}
+
+<p>✅ Aktuell liegen keine Tornadowarnungen des DWD vor.</p>
+
+{% endif %} 
+            </div>
+
+            <div class="placeholder-card">
+                <h4>🗺 Tornado-Karte</h4>
+                <p>Interaktive Übersicht aktueller Ereignisse.</p>
+            </div>
+
+            <div class="placeholder-card">
+                <h4>📸 Sichtungen</h4>
+                <p>Gemeldete Tornados und Nutzerberichte.</p>
+            </div>
+
+            <div class="placeholder-card">
+                <h4>📊 Statistik</h4>
+                <p>Auswertungen und historische Ereignisse.</p>
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+<div class="card">
+    <h2>📷 Community</h2>
+
+    <p>
+        Fotos, Meldungen und Feedback unserer Wetterbeobachter.
+    </p>
+
+    <h3>🧪 Beta-Feedback</h3>
+
+    <form id="feedbackForm">
+
+        <input
+            type="text"
+            id="name"
+            placeholder="Name (optional)">
+
+        <textarea
+            id="feedback"
+            rows="5"
+            placeholder="Fehler, Ideen oder Verbesserungsvorschläge..."></textarea>
+
+        <button type="submit">
+            📨 Feedback senden
+        </button>
+
+    </form>
+
+    <div id="feedbackStatus"></div>
+
+</div>
+</section>
+</main>
+
+<footer>
+
+<p>
+© 2026 Wetterstudio Bad Feilnbach
+</p>
+
+</footer>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="/static/js/app.js"></script>
+<script src="/static/js/warnticker.js"></script>
+<script src="/static/js/alarm.js"></script>
+<script src="/static/js/feedback.js"></script>
+</body>
+</html>

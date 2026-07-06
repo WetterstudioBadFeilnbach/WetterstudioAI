@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtuelle Umgebung
+.venv/
+venv/
+
+# Backup-Dateien
+*_Backup*
+*Backup*
+*Kopie*
+*.zip
+
+# Betriebssystem
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
+
+# Logs
+*.log
