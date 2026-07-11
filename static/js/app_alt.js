@@ -215,112 +215,43 @@ countdown + "<br>" +
 
                     });
     console.log("Landkreis geklickt");
-function ladeWetter(lat, lon, landkreis) {
-console.log("ladeWetter gestartet");
-    fetch(`/api/wetter?lat=${lat}&lon=${lon}`)
-    .then(r => r.json())
-    .then(wetter => {
-console.log("API Wetter:", wetter);
-console.log("Ort aus API:", wetter.ort);
-        document.getElementById("ort").innerHTML =
-    wetter.ort;
 
-        document.getElementById("temperatur").innerHTML =
-            wetter.temperatur + " °C";
-
-        document.getElementById("wettertext").innerHTML =
-            wetter.wettertext;
-   console.log("Weather-Code:", wetter.weather_code);         
-let icon = "❔";
-
-switch (wetter.weather_code) {
-
-    case 0:
-        icon = "☀️";
-        break;
-
-    case 1:
-    case 2:
-        icon = "🌤️";
-        break;
-
-    case 3:
-        icon = "☁️";
-        break;
-
-    case 45:
-    case 48:
-        icon = "🌫️";
-        break;
-
-    case 51:
-    case 53:
-    case 55:
-    case 56:
-    case 57:
-        icon = "🌦️";
-        break;
-
-    case 61:
-    case 63:
-    case 65:
-    case 66:
-    case 67:
-        icon = "🌧️";
-        break;
-
-    case 71:
-    case 73:
-    case 75:
-    case 77:
-        icon = "❄️";
-        break;
-
-    case 80:
-    case 81:
-    case 82:
-        icon = "🌦️";
-        break;
-
-    case 95:
-    case 96:
-    case 99:
-        icon = "⛈️";
-        break;
-
-}
-
-document.getElementById("wettericon").innerHTML = icon;
-        document.getElementById("wind").innerHTML =
-            wetter.wind + " km/h";
-
-        document.getElementById("boeen").innerHTML =
-            wetter.boeen + " km/h";
-
-        document.getElementById("regen").innerHTML =
-            wetter.regen + " mm";
-
-        document.getElementById("luftdruck").innerHTML =
-            wetter.luftdruck + " hPa";
-
-        document.getElementById("luftfeuchte").innerHTML =
-            wetter.luftfeuchte + " %";
-
-        document.getElementById("gefuehlt").innerHTML =
-            wetter.gefuehlt + " °C";
-
-    });
-
-}
 const mitte = layer.getBounds().getCenter();
+
 
 console.log(mitte);
 
-ladeWetter(
-    mitte.lat,
-    mitte.lng,
-    landkreis
-);
+fetch(`/api/wetter?lat=${mitte.lat}&lon=${mitte.lng}`)
+.then(r => r.json())
+.then(wetter => {
+
+    document.getElementById("ort").innerHTML = landkreis;
+
+    document.getElementById("temperatur").innerHTML =
+        wetter.temperatur + " °C";
+
+    document.getElementById("wettertext").innerHTML =
+        wetter.wettertext;
+
+    document.getElementById("wind").innerHTML =
+        wetter.wind + " km/h";
+
+    document.getElementById("boeen").innerHTML =
+        wetter.boeen + " km/h";
+
+    document.getElementById("regen").innerHTML =
+        wetter.regen + " mm";
+
+    document.getElementById("luftdruck").innerHTML =
+        wetter.luftdruck + " hPa";
+
+    document.getElementById("luftfeuchte").innerHTML =
+        wetter.luftfeuchte + " %";
+
+    document.getElementById("gefuehlt").innerHTML =
+        wetter.gefuehlt + " °C";
+
+});
                     layer.bindPopup(html).openPopup();
 
                 });
@@ -461,10 +392,10 @@ legende.onAdd = function () {
     div.innerHTML =
     "<div style='background:white;padding:10px;border-radius:8px;box-shadow:0 0 10px rgba(0,0,0,.3);font-size:14px;line-height:22px'>" +
     "<b>Warnstufen</b><hr style='margin:6px 0'>" +
-    "<span style='color:#FFD600;font-weight:bold'>🟡 Gelb – Wetterwarnung</span><br>" +
-"<span style='color:#FF9800;font-weight:bold'>🟠 Orange – Markante Wetterwarnung</span><br>" +
-"<span style='color:#E53935;font-weight:bold'>🔴 Rot – Unwetterwarnung</span><br>" +
-"<span style='color:#8E24AA;font-weight:bold'>🟣 Violett – Extremes Unwetter</span>" +
+    "<span style='color:#FFD600;font-weight:bold'>🟡 Gelb</span><br>" +
+    "<span style='color:#FF9800;font-weight:bold'>🟠 Orange</span><br>" +
+    "<span style='color:#E53935;font-weight:bold'>🔴 Rot</span><br>" +
+    "<span style='color:#8E24AA;font-weight:bold'>🟣 Violett</span>" +
     "</div>";
         "<div style='background:white;padding:10px;border-radius:8px;box-shadow:0 0 10px rgba(0,0,0,.3);font-size:14px'>" +
         "<b>Warnstufen</b><br><br>" +
@@ -494,7 +425,7 @@ setInterval(() => {
 
         });
 
-}, 120000);
+}, 300000);
    
 // Radarbild laden
 function ladeRadar() {
@@ -510,22 +441,9 @@ function ladeRadar() {
 }
 
 ladeRadar();
-ladeWetter(
-    47.7868,
-    12.0094,
-    "Bad Feilnbach"
-);
+
 // alle 5 Minuten aktualisieren
-setInterval(ladeRadar, 120000);
-// Fortschrittsbalken
-const balken = document.getElementById("progressBar");
-
-if (balken) {
-    const prozent = Number(balken.dataset.prozent) || 0;
-
-    balken.style.width = prozent + "%";
-    balken.textContent = prozent + " %";
-}
+setInterval(ladeRadar, 300000);
     })
     .catch(error => console.error(error));
 

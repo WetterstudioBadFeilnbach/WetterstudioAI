@@ -88,7 +88,7 @@ async def startseite(request: Request):
 
             "gewitter": stats["gewitter"],
             "tornados": stats["tornado"],
-
+            "ort": wetter["ort"],
             "temperatur": f'{wetter["temperatur"]} °C',
             "wind": f'{wetter["wind"]} km/h',
             "boeen": f'{wetter["boeen"]} km/h',

@@ -53,7 +53,7 @@ def wettertext(code):
         return "❔ Unbekannt"
 
 
-def aktuelle_wetterdaten(lat=48.0, lon=11.8):
+def aktuelle_wetterdaten(lat=47.7868, lon=12.0094):
 
     url = (
         "https://api.open-meteo.com/v1/forecast"
@@ -85,7 +85,7 @@ def aktuelle_wetterdaten(lat=48.0, lon=11.8):
         code = current.get("weather_code", -1)
 
         return {
-            "ort": ort_ermitteln(lat, lon),
+            "ort": "Bad Feilnbach",
             "temperatur": round(current.get("temperature_2m", 0), 1),
             "gefuehlt": round(current.get("apparent_temperature", 0), 1),
             "luftfeuchte": current.get("relative_humidity_2m", 0),
