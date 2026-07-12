@@ -136,7 +136,11 @@ function findeWarnname(warnungen, landkreis) {
 document.addEventListener("DOMContentLoaded", () => {
 
     console.log("Wetterstudio Bad Feilnbach AI gestartet");
-
+ladeWetter(
+    47.7868,
+    12.0094,
+    "Bad Feilnbach"
+);
     const karte = document.getElementById("deutschlandkarte");
     const suche = document.getElementById("landkreisSuche");
     const suchErgebnisse = document.getElementById("suchErgebnisse");
@@ -183,7 +187,7 @@ let suchname = findeWarnname(warnungen, landkreis);
                         }
 
                     });
-
+console.log("Landkreis:", suchname, "maxLevel:", maxLevel, warnungen[suchname]);
                     if (maxLevel == 2) {
                         farbe = "#FFD600";
                         opacity = 0.55;
