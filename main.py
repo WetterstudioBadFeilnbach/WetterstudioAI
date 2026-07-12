@@ -28,9 +28,15 @@ async def api_warnungen():
 @app.get("/api/wetter")
 async def api_wetter(
     lat: float = Query(...),
-    lon: float = Query(...)
+    lon: float = Query(...),
+    landkreis: str = Query("")
 ):
-    return aktuelle_wetterdaten(lat, lon)
+    wetter = aktuelle_wetterdaten(lat, lon)
+
+    if landkreis:
+        wetter["ort"] = landkreis
+
+    return wetter
 
 
 @app.get("/")

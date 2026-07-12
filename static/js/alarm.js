@@ -12,7 +12,7 @@ document.addEventListener("click", () => {
     let ersterAufruf = true;
 
     function pruefeWarnungen() {
-
+console.count("pruefeWarnungen");
         fetch("/api/warnungen")
             .then(r => r.json())
             .then(warnungen => {
@@ -58,23 +58,18 @@ console.log("Aktuelle IDs:", [...aktuelleWarnungen]);
                 }
 
    // Alarm nur bei wirklich neuer Warnung
-if (neueWarnung) {
+if (neueWarnung && audioFreigegeben) {
 
-    if (audioFreigegeben) {
+    console.log("🔔 Neue DWD-Warnung erkannt");
 
-        alarm.play().then(() => {
-            console.log("✅ Alarm erfolgreich abgespielt");
-        }).catch(err => {
-            console.error("❌ Alarm konnte nicht abgespielt werden:", err);
-        });
+    alarm.pause();
+    alarm.currentTime = 0;
 
-    } else {
-
-        console.log("🔇 Audio noch nicht freigegeben");
-
-    }
-
-    console.log("🔔 Neue DWD-Warnung erkannt - Alarm abgespielt");
+    alarm.play().then(() => {
+        console.log("✅ Alarm einmal abgespielt");
+    }).catch(err => {
+        console.error(err);
+    });
 
 }
 
