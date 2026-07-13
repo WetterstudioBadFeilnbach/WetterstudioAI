@@ -159,7 +159,9 @@ ladeWetter(
     ])
 
     .then(([datenWarnungen, geojson]) => {
-
+console.log("Promise.all erfolgreich");
+console.log("Warnungen:", datenWarnungen);
+console.log("GeoJSON Features:", geojson.features.length);
     let warnungen = datenWarnungen;
 
        const geojsonLayer = L.geoJSON(geojson, {
