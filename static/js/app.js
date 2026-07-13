@@ -183,14 +183,14 @@ let suchname = findeWarnname(warnungen, landkreis);
                  if (warnungen[suchname]) {
 
     warnungen[suchname].forEach(w => {
-
+console.log("WARNOBJEKT:", JSON.stringify(w));
                         if (w.level > maxLevel) {
                             maxLevel = w.level;
                         }
 
                     });
 console.log("Landkreis:", suchname);
-console.log("Warnung:", w);
+
 console.log("maxLevel:", maxLevel);
                     if (maxLevel == 2) {
                         farbe = "#FFD600";
