@@ -189,7 +189,9 @@ let suchname = findeWarnname(warnungen, landkreis);
                         }
 
                     });
-console.log("Landkreis:", suchname, "maxLevel:", maxLevel, warnungen[suchname]);
+console.log("Landkreis:", suchname);
+console.log("Warnung:", w);
+console.log("maxLevel:", maxLevel);
                     if (maxLevel == 2) {
                         farbe = "#FFD600";
                         opacity = 0.55;
