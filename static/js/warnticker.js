@@ -13,11 +13,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 const meldungen = [];
                 const infos = [];
-
+let neuesteWarnung = null;
                 for (const landkreis in warnungen) {
 
                     warnungen[landkreis].forEach(w => {
-
+if (
+    !neuesteWarnung ||
+    new Date(w.start) > new Date(neuesteWarnung.start)
+) {
+    neuesteWarnung = {
+        landkreis: landkreis,
+        warnung: w,
+        start: w.start
+    };
+}
                         let symbol = "🟡";
 
                         if (w.level >= 5) {
@@ -40,13 +49,18 @@ document.addEventListener("DOMContentLoaded", () => {
                             })
                         );
 
-                        infos.push(
-                            "🚨 Neue " +
-                            w.event +
-                            " für " +
-                            landkreis +
-                            ". Bitte die Wetterentwicklung verfolgen."
-                        );
+                       if (
+    neuesteWarnung &&
+    neuesteWarnung.warnung === w
+) {
+    infos.push(
+        "🚨 Neue " +
+        w.event +
+        " für " +
+        landkreis +
+        ". Bitte die Wetterentwicklung verfolgen."
+    );
+}
 
                     });
 
@@ -74,7 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     infoTicker.innerHTML =
                         "<marquee behavior='scroll' direction='left' scrollamount='4'>" +
-                        infos.join(" &nbsp;&nbsp;&nbsp; ⭐ &nbsp;&nbsp;&nbsp; ") +
+                     infos[0]
                         "</marquee>";
 
                 }

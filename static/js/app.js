@@ -173,25 +173,27 @@ console.log("GeoJSON Features:", geojson.features.length);
                     feature.properties.NAME ||
                     "";
 let suchname = findeWarnname(warnungen, landkreis);
+console.log("Landkreis:", landkreis, "→", suchname, warnungen[suchname]);
 // console.log(landkreis);
+if (!warnungen[suchname]) console.log("NICHT GEFUNDEN:", landkreis, "→", suchname);
                 let farbe = "#3ec5ff";
                 let opacity = 0.08;
                            
 
                     let maxLevel = 0;
-
+console.log("maxLevel vor Auswertung:", maxLevel, "Landkreis:", landkreis);
                  if (warnungen[suchname]) {
 
     warnungen[suchname].forEach(w => {
-console.log("WARNOBJEKT:", JSON.stringify(w));
+
                         if (w.level > maxLevel) {
                             maxLevel = w.level;
                         }
 
                     });
-console.log("Landkreis:", suchname);
+console.log("Landkreis:", landkreis, "maxLevel:", maxLevel);
 
-console.log("maxLevel:", maxLevel);
+
                     if (maxLevel == 2) {
                         farbe = "#FFD600";
                         opacity = 0.55;
@@ -479,13 +481,7 @@ legende.onAdd = function () {
 "<span style='color:#E53935;font-weight:bold'>🔴 Rot – Unwetterwarnung</span><br>" +
 "<span style='color:#8E24AA;font-weight:bold'>🟣 Violett – Extremes Unwetter</span>" +
     "</div>";
-        "<div style='background:white;padding:10px;border-radius:8px;box-shadow:0 0 10px rgba(0,0,0,.3);font-size:14px'>" +
-        "<b>Warnstufen</b><br><br>" +
-        "🟡 Gelb<br>" +
-        "🟠 Orange<br>" +
-        "🔴 Rot<br>" +
-        "🟣 Violett" +
-        "</div>";
+        
 
     return div;
 };

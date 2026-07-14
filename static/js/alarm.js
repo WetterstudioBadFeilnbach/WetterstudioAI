@@ -2,7 +2,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     console.log("🔔 Alarmmodul gestartet");
 
-    const alarm = new Audio("/static/audio/alarm.mp3");
+   const alarm = new Audio("/static/audio/gong.mp3");
+   const dwdAnsage = new Audio("/static/audio/dwd_ansage.mp3");
 let audioFreigegeben = false;
 
 document.addEventListener("click", () => {
@@ -65,11 +66,20 @@ if (neueWarnung && audioFreigegeben) {
     alarm.pause();
     alarm.currentTime = 0;
 
-    alarm.play().then(() => {
-        console.log("✅ Alarm einmal abgespielt");
-    }).catch(err => {
-        console.error(err);
-    });
+alarm.play().then(() => {
+
+    console.log("✅ Alarm einmal abgespielt");
+dwdAnsage.currentTime = 0;
+
+dwdAnsage.play().then(() => {
+    console.log("✅ DWD-Ansage erfolgreich");
+}).catch(err => {
+    console.error("❌ DWD-Ansage Fehler:", err);
+});
+   
+}).catch(err => {
+    console.error(err);
+});
 
 }
 
@@ -97,7 +107,7 @@ const testButton = document.getElementById("alarm-test");
 if (testButton) {
 
     testButton.addEventListener("click", () => {
-
+console.log("Audio:", alarm.src);
         alarm.play().then(() => {
             console.log("✅ Testalarm erfolgreich abgespielt");
         }).catch(err => {
