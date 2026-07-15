@@ -4,12 +4,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
    const alarm = new Audio("/static/audio/gong.mp3");
    const dwdAnsage = new Audio("/static/audio/dwd_ansage.mp3");
+   dwdAnsage.preload = "auto";
 let audioFreigegeben = false;
 
 document.addEventListener("click", () => {
     audioFreigegeben = true;
 }, { once: true });
-    const bekannteWarnungen = new Set();
+    let bekannteWarnungen = new Set();
     let ersterAufruf = true;
 
     function pruefeWarnungen() {
@@ -22,11 +23,17 @@ console.count("pruefeWarnungen");
 
                 for (const landkreis in warnungen) {
 
-                    warnungen[landkreis].forEach(w => {
-                        if (w.identifier) {
-                            aktuelleWarnungen.add(w.identifier);
-                        }
-                    });
+                   warnungen[landkreis].forEach(w => {
+
+    const warnID =
+        landkreis + "|" +
+        w.event + "|" +
+        w.start + "|" +
+        w.end;
+
+    aktuelleWarnungen.add(warnID);
+
+});
 
                 }
 
@@ -41,9 +48,10 @@ console.count("pruefeWarnungen");
                     }
                 });
 
-                console.log("Neue Warnung:", neueWarnung);
-console.log("Bekannte IDs:", [...bekannteWarnungen]);
-console.log("Aktuelle IDs:", [...aktuelleWarnungen]);
+              console.log("Neue Warnung:", neueWarnung);
+console.log("Bekannte IDs:", Array.from(bekannteWarnungen));
+console.log("Aktuelle IDs:", Array.from(aktuelleWarnungen));
+console.log("Neue IDs:", Array.from(aktuelleWarnungen).filter(id => !bekannteWarnungen.has(id)));
                 // Beim ersten Start keinen Alarm auslösen
                 if (ersterAufruf) {
 
@@ -59,6 +67,8 @@ console.log("Aktuelle IDs:", [...aktuelleWarnungen]);
                 }
 
    // Alarm nur bei wirklich neuer Warnung
+   console.log("Neue Warnung:", neueWarnung);
+console.log("Audio freigegeben:", audioFreigegeben);
 if (neueWarnung && audioFreigegeben) {
 
     console.log("🔔 Neue DWD-Warnung erkannt");
@@ -68,7 +78,9 @@ if (neueWarnung && audioFreigegeben) {
 
 alarm.play().then(() => {
 
-    console.log("✅ Alarm einmal abgespielt");
+console.log("✅ Alarm einmal abgespielt");
+console.log("Starte DWD-Ansage...");
+
 dwdAnsage.currentTime = 0;
 
 dwdAnsage.play().then(() => {
@@ -84,11 +96,10 @@ dwdAnsage.play().then(() => {
 }
 
 // Bekannte Warnungen immer mit dem aktuellen DWD-Stand synchronisieren
-bekannteWarnungen.clear();
+// Bekannte Warnungen exakt mit dem aktuellen DWD-Stand synchronisieren
+bekannteWarnungen = new Set(aktuelleWarnungen);
 
-aktuelleWarnungen.forEach(id => {
-    bekannteWarnungen.add(id);
-});
+console.log("Bekannte Warnungen synchronisiert:", bekannteWarnungen.size);
 
             })
             .catch(err => {
@@ -108,8 +119,11 @@ if (testButton) {
 
     testButton.addEventListener("click", () => {
 console.log("Audio:", alarm.src);
+console.log("Ansage:", dwdAnsage.src);
         alarm.play().then(() => {
             console.log("✅ Testalarm erfolgreich abgespielt");
+            console.log("Starte DWD-Ansage...");
+dwdAnsage.play();
         }).catch(err => {
             console.error("❌ Testalarm fehlgeschlagen:", err);
         });

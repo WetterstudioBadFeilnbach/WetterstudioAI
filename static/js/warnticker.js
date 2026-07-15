@@ -17,14 +17,28 @@ let neuesteWarnung = null;
                 for (const landkreis in warnungen) {
 
                     warnungen[landkreis].forEach(w => {
+                        let prioritaet = 0;
+
+if (w.event.includes("TORNADO")) prioritaet = 100;
+else if (w.event.includes("GEWITTER")) prioritaet = 90;
+else if (w.event.includes("STARKREGEN")) prioritaet = 80;
+else if (w.event.includes("STURM")) prioritaet = 70;
+else if (w.event.includes("SCHNEE")) prioritaet = 60;
+else if (w.event.includes("GLATTEIS")) prioritaet = 60;
+else if (w.event.includes("HITZE")) prioritaet = 10;
 if (
     !neuesteWarnung ||
-    new Date(w.start) > new Date(neuesteWarnung.start)
+    prioritaet > neuesteWarnung.prioritaet ||
+    (
+        prioritaet === neuesteWarnung.prioritaet &&
+        new Date(w.start) > new Date(neuesteWarnung.start)
+    )
 ) {
     neuesteWarnung = {
         landkreis: landkreis,
         warnung: w,
-        start: w.start
+        start: w.start,
+        prioritaet: prioritaet
     };
 }
                         let symbol = "🟡";
@@ -84,14 +98,28 @@ if (
                     meldungen.join(" &nbsp;&nbsp;&nbsp; • &nbsp;&nbsp;&nbsp; ") +
                     "</marquee>";
 
-                if (infoTicker) {
+       if (infoTicker) {
 
-                    infoTicker.innerHTML =
-                        "<marquee behavior='scroll' direction='left' scrollamount='4'>" +
-                     infos[0]
-                        "</marquee>";
+    if (neuesteWarnung) {
 
-                }
+        infoTicker.innerHTML =
+            "<marquee behavior='scroll' direction='left' scrollamount='4'>" +
+            "🚨 " +
+            neuesteWarnung.warnung.headline +
+            " – " +
+            neuesteWarnung.landkreis +
+            "</marquee>";
+
+    } else {
+
+        infoTicker.innerHTML =
+            "<marquee behavior='scroll' direction='left' scrollamount='4'>" +
+            "ℹ️ Zurzeit liegen keine neuen DWD-Warnungen vor." +
+            "</marquee>";
+
+    }
+
+}
 
             })
             .catch(error => {

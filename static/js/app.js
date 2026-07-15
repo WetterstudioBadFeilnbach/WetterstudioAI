@@ -136,6 +136,7 @@ function findeWarnname(warnungen, landkreis) {
 document.addEventListener("DOMContentLoaded", () => {
 
     console.log("Wetterstudio Bad Feilnbach AI gestartet");
+    console.log("APP VERSION TEST 15.07");
 ladeWetter(
     47.7868,
     12.0094,
@@ -468,19 +469,25 @@ document.addEventListener("keydown", function (e) {
 
 
 const legende = L.control({ position: "bottomright" });
-
+console.log("Neue Legende wird erstellt");
 legende.onAdd = function () {
 
-    const div = L.DomUtil.create("div", "info legend");
+   const div = L.DomUtil.create("div");
+div.style.height = "220px";
+ div.innerHTML =
+"<div style='background:rgba(255,255,255,.95);min-height:160px;padding:10px 3px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.18);font-size:10px;display:flex;flex-direction:column;justify-content:space-evenly'>" +
 
-    div.innerHTML =
-    "<div style='background:white;padding:10px;border-radius:8px;box-shadow:0 0 10px rgba(0,0,0,.3);font-size:14px;line-height:22px'>" +
-    "<b>Warnstufen</b><hr style='margin:6px 0'>" +
-    "<span style='color:#FFD600;font-weight:bold'>🟡 Gelb – Wetterwarnung</span><br>" +
-"<span style='color:#FF9800;font-weight:bold'>🟠 Orange – Markante Wetterwarnung</span><br>" +
-"<span style='color:#E53935;font-weight:bold'>🔴 Rot – Unwetterwarnung</span><br>" +
-"<span style='color:#8E24AA;font-weight:bold'>🟣 Violett – Extremes Unwetter</span>" +
-    "</div>";
+"<b style='display:block;margin-bottom:8px'>Warnstufen</b>" +
+
+"<div style='display:flex;align-items:center;height:22px'><span style='color:#FFD600;font-weight:bold;width:55px'>🟡 Gelb</span><span>Wetterwarnung</span></div>" +
+
+"<div style='display:flex;align-items:center;height:22px'><span style='color:#FF9800;font-weight:bold;width:55px'>🟠 Orange</span><span>Markante Wetterwarnung</span></div>" +
+
+"<div style='display:flex;align-items:center;height:22px'><span style='color:#E53935;font-weight:bold;width:55px'>🔴 Rot</span><span>Unwetterwarnung</span></div>" +
+
+"<div style='display:flex;align-items:center;height:22px'><span style='color:#8E24AA;font-weight:bold;width:55px'>🟣 Violett</span><span>Extremes Unwetter</span></div>" +
+
+"</div>";
         
 
     return div;
