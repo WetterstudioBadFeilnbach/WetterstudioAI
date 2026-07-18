@@ -110,18 +110,7 @@ footer {
     max-width: 1100px;
 margin: 0 auto;
 }
-.leaflet-control.legend {
-    bottom: 12px !important;
-    right: 12px !important;
 
-    background: rgba(255,255,255,.92);
-    border-radius: 6px;
-    padding: 4px 6px;
-    box-shadow: 0 2px 6px rgba(0,0,0,.18);
-
-    font-size: 10px;
-    line-height: 14px;
-}
 .such-container {
     position: relative;
     width: 320px;
@@ -604,4 +593,56 @@ margin: 0 auto;
     color:#d7e5ff;
     font-size:14px;
     line-height:1.5;
+}
+/* ------------------------- */
+/* DWD-Legende               */
+/* ------------------------- */
+
+.dwd-legende {
+    background: rgba(20, 30, 45, 0.92);
+    color: #ffffff;
+    padding: 10px 12px;
+    border: 1px solid #3b82f6;
+    border-radius: 8px;
+    box-shadow: 0 3px 10px rgba(0,0,0,.35);
+    font-size: 13px;
+    line-height: 1.5;
+    min-width: 185px;
+}
+
+.dwd-legende h4 {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.dwd-legende .stufe {
+    display: flex;
+    align-items: center;
+    margin: 4px 0;
+}
+
+.dwd-legende .farbe {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    margin-right: 8px;
+    border: 1px solid rgba(255,255,255,.25);
+}
+
+.dwd-legende .gelb {
+    background: #ffd600;
+}
+
+.dwd-legende .orange {
+    background: #ff9800;
+}
+
+.dwd-legende .rot {
+    background: #e53935;
+}
+
+.dwd-legende .violett {
+    background: #8e24aa;
 }

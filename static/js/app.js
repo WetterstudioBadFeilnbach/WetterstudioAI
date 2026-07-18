@@ -348,7 +348,49 @@ geojsonLayer.addTo(map);
 // ------------------------------
 // Live-Suche
 // ------------------------------
+// ------------------------------
+// DWD-Legende
+// ------------------------------
 
+const legende = L.control({ position: "bottomright" });
+
+legende.onAdd = function () {
+
+  const div = L.DomUtil.create("div");
+div.className = "dwd-legende";
+div.style.background = "#1f2937";
+div.style.color = "white";
+div.style.padding = "10px";
+div.style.border = "2px solid #ffd700";
+div.style.borderRadius = "8px";
+div.innerHTML = `
+<h4>📖 DWD-Warnstufen</h4>
+
+<div class="stufe">
+    <span class="farbe gelb"></span>
+    Wetterwarnung
+</div>
+
+<div class="stufe">
+    <span class="farbe orange"></span>
+    Markante Wetterwarnung
+</div>
+
+<div class="stufe">
+    <span class="farbe rot"></span>
+    Unwetterwarnung
+</div>
+
+<div class="stufe">
+    <span class="farbe violett"></span>
+    Extremes Unwetter
+</div>
+`;
+
+    return div;
+};
+console.log(">>> DWD-Legende wird hinzugefügt");
+legende.addTo(map);
 const layerListe = [];
 
 geojsonLayer.eachLayer(layer => {
@@ -468,32 +510,8 @@ document.addEventListener("keydown", function (e) {
 });
 
 
-const legende = L.control({ position: "bottomright" });
-console.log("Neue Legende wird erstellt");
-legende.onAdd = function () {
 
-   const div = L.DomUtil.create("div");
-div.style.height = "220px";
- div.innerHTML =
-"<div style='background:rgba(255,255,255,.95);min-height:160px;padding:10px 3px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.18);font-size:10px;display:flex;flex-direction:column;justify-content:space-evenly'>" +
 
-"<b style='display:block;margin-bottom:8px'>Warnstufen</b>" +
-
-"<div style='display:flex;align-items:center;height:22px'><span style='color:#FFD600;font-weight:bold;width:55px'>🟡 Gelb</span><span>Wetterwarnung</span></div>" +
-
-"<div style='display:flex;align-items:center;height:22px'><span style='color:#FF9800;font-weight:bold;width:55px'>🟠 Orange</span><span>Markante Wetterwarnung</span></div>" +
-
-"<div style='display:flex;align-items:center;height:22px'><span style='color:#E53935;font-weight:bold;width:55px'>🔴 Rot</span><span>Unwetterwarnung</span></div>" +
-
-"<div style='display:flex;align-items:center;height:22px'><span style='color:#8E24AA;font-weight:bold;width:55px'>🟣 Violett</span><span>Extremes Unwetter</span></div>" +
-
-"</div>";
-        
-
-    return div;
-};
-
-legende.addTo(map);
 setInterval(() => {
 
     fetch("/api/warnungen")
