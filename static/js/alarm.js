@@ -53,6 +53,33 @@ console.log("Bekannte IDs:", Array.from(bekannteWarnungen));
 console.log("Aktuelle IDs:", Array.from(aktuelleWarnungen));
 console.log("Neue IDs:", Array.from(aktuelleWarnungen).filter(id => !bekannteWarnungen.has(id)));
                 // Beim ersten Start keinen Alarm auslösen
+                // Prüfen, ob eine Tornado-/Windhosenwarnung vorhanden ist
+let tornadoWarnung = false;
+
+for (const landkreis in warnungen) {
+
+    for (const w of warnungen[landkreis]) {
+
+        const text = (
+            (w.event || "") + " " +
+            (w.headline || "") + " " +
+            (w.description || "")
+        ).toLowerCase();
+
+        if (
+            text.includes("tornado") ||
+            text.includes("windhose") ||
+            text.includes("tornad")
+        ) {
+            tornadoWarnung = true;
+            break;
+        }
+    }
+
+    if (tornadoWarnung) break;
+}
+
+
                 if (ersterAufruf) {
 
                     aktuelleWarnungen.forEach(id => {
@@ -69,8 +96,25 @@ console.log("Neue IDs:", Array.from(aktuelleWarnungen).filter(id => !bekannteWar
    // Alarm nur bei wirklich neuer Warnung
    console.log("Neue Warnung:", neueWarnung);
 console.log("Audio freigegeben:", audioFreigegeben);
-if (neueWarnung && audioFreigegeben) {
 
+console.log("Neue Warnung:", neueWarnung, "Audio:", audioFreigegeben);
+if (neueWarnung && audioFreigegeben && !ersterAufruf) {
+if (tornadoWarnung) {
+
+    console.log("🌪️ TORNADO-WARNUNG erkannt");
+
+    speechSynthesis.cancel();
+
+    const tornadoAnsage = new SpeechSynthesisUtterance(
+        "Achtung. Tornado oder Windhosenwarnung des Deutschen Wetterdienstes. Bitte verfolgen Sie die aktuelle Wetterlage aufmerksam."
+    );
+
+    tornadoAnsage.lang = "de-DE";
+    tornadoAnsage.rate = 1.0;
+    tornadoAnsage.pitch = 1.0;
+
+    speechSynthesis.speak(tornadoAnsage);
+}
     console.log("🔔 Neue DWD-Warnung erkannt");
 
     alarm.pause();

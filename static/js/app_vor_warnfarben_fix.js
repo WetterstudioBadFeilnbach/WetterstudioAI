@@ -181,95 +181,50 @@ if (!warnungen[suchname]) console.log("NICHT GEFUNDEN:", landkreis, "→", suchn
                 let opacity = 0.08;
                            
 
-          let maxLevel = 0;
-
-if (warnungen[suchname]) {
+                    let maxLevel = 0;
+console.log("maxLevel vor Auswertung:", maxLevel, "Landkreis:", landkreis);
+                 if (warnungen[suchname]) {
 
     warnungen[suchname].forEach(w => {
 
-        console.log(
-            "Warnung:",
-            landkreis,
-            "Typ:",
-            w.type,
-            "Level:",
-            w.level,
-            "Ereignis:",
-            w.event
-        );
+                        if (w.level > maxLevel) {
+                            maxLevel = w.level;
+                        }
 
-        // Gewitter immer mindestens orange darstellen
-        if (w.type === 0) {
-            maxLevel = Math.max(maxLevel, 3);
-        }
-
-        // Vorabinformation Unwetter (schraffiert)
-        else if (w.type === 9) {
-            maxLevel = Math.max(maxLevel, 6);
-        }
-
-        // Hitzewarnungen gelb
-        else if (w.type === 8) {
-            maxLevel = Math.max(maxLevel, 2);
-        }
-
-        // Alle übrigen Warnungen nach DWD-Level
-        else {
-            maxLevel = Math.max(maxLevel, w.level);
-        }
-
-    });
-
-}
-
-console.log("Landkreis:", landkreis, "maxLevel:", maxLevel);          
+                    });
+console.log("Landkreis:", landkreis, "maxLevel:", maxLevel);
 
 
                     if (maxLevel == 2) {
+                        farbe = "#FFD600";
+                        opacity = 0.55;
+                    }
 
-    farbe = "#FFD600";
-    opacity = 0.55;
+                    else if (maxLevel == 3) {
+                        farbe = "#FF9800";
+                        opacity = 0.60;
+                    }
 
-}
+                    else if (maxLevel == 4) {
+                        farbe = "#E53935";
+                        opacity = 0.65;
+                    }
 
-else if (maxLevel == 3) {
+                    else if (maxLevel >= 5) {
+                        farbe = "#8E24AA";
+                        opacity = 0.70;
+                    }
 
-    farbe = "#FF9800";
-    opacity = 0.60;
+                }
 
-}
+                return {
 
-else if (maxLevel == 4) {
+                    color: farbe,
+                    weight: 1,
+                    fillColor: farbe,
+                    fillOpacity: opacity
 
-    farbe = "#E53935";
-    opacity = 0.65;
-
-}
-
-else if (maxLevel == 5) {
-
-    farbe = "#8E24AA";
-    opacity = 0.70;
-
-}
-
-else if (maxLevel == 6) {
-
-    // Vorabinformation
-    farbe = "#FF9800";
-    opacity = 0.35;
-
-}
-return {
-                
-                
-
-    color: farbe,
-    weight: 1,
-    fillColor: farbe,
-    fillOpacity: opacity
-
-};
+                };
 
             },
                         onEachFeature: function(feature, layer) {

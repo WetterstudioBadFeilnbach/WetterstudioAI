@@ -115,6 +115,7 @@ def landkreis_warnungen(daten):
 
             warnungen[name].append({
                 "regionName": name,
+                "type": warnung.get("type", -1),
                 "level": warnung.get("level", 0),
                 
                 "event": warnung.get("event", ""),

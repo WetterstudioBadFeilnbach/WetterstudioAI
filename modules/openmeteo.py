@@ -97,19 +97,21 @@ def aktuelle_wetterdaten(lat=47.7868, lon=12.0094):
             "wettertext": wettertext(code),
             "daily": daily,
         }
-
-    except Exception:
+    except Exception as e:
+        print("OPENMETEO-FEHLER:", e)
 
         return {
-            "ort": "--",
-            "temperatur": "--",
-            "gefuehlt": "--",
-            "luftfeuchte": "--",
-            "wind": "--",
-            "boeen": "--",
-            "regen": "--",
-            "luftdruck": "--",
-            "weather_code": -1,
-            "wettertext": "--",
-            "daily": {},
-        }
+        "ort": "--",
+        "temperatur": "--",
+        "gefuehlt": "--",
+        "luftfeuchte": "--",
+        "wind": "--",
+        "boeen": "--",
+        "regen": "--",
+        "luftdruck": "--",
+        "weather_code": -1,
+        "wettertext": "--",
+        "daily": {},
+    }
+ 
+      

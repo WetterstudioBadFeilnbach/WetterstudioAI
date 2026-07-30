@@ -1,9 +1,16 @@
 from fastapi import FastAPI, Request, Query
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-
+from fastapi.responses import JSONResponse
 from modules.dwd import lade_warnungen, statistik, landkreis_warnungen
 from modules.openmeteo import aktuelle_wetterdaten
+from modules.stormtracking import (
+    stormtracking_status,
+    radar_download_status,
+    radar_info,
+    radar_download
+)
+from modules.radolan import radar_status
 from config import VERSION, FEATURES
 from fastapi import Body
 from datetime import datetime
@@ -22,8 +29,45 @@ async def api_warnungen():
 
     daten = lade_warnungen()
     return landkreis_warnungen(daten)
+@app.get("/api/stormtracking")
+async def api_stormtracking():
+    return stormtracking_status()
+@app.get("/api/radarstatus")
+async def api_radarstatus():
+    return radar_download_status()
+@app.get("/api/radarinfo")
+async def api_radarinfo():
+    return radar_info()
+@app.get("/api/radardownload")
+async def api_radardownload():
+    return radar_download()
+@app.get("/api/radolanstatus")
+async def api_radolanstatus():
+    return radar_status()
+@app.get("/api/radarzellen")
+async def api_radarzellen():
+    from modules.test_tracking import TESTMODUS, test_zellen 
 
+    from pathlib import Path
+    import json
 
+    datei = Path("static/data/radarzellen.json")
+
+    if not datei.exists():
+        return JSONResponse([])
+
+        datei = Path("static/data/radarzellen.json")
+
+    if not datei.exists():
+        return JSONResponse([])
+
+    if TESTMODUS:
+        return JSONResponse(test_zellen())
+
+    with open(datei, "r", encoding="utf-8") as f:
+        daten = json.load(f)
+
+    return JSONResponse(daten)
 # Neue Wetter-API
 @app.get("/api/wetter")
 async def api_wetter(
@@ -81,7 +125,7 @@ async def startseite(request: Request):
 
     # Open-Meteo
     wetter = aktuelle_wetterdaten()
-
+    stormtracking = stormtracking_status()
     return templates.TemplateResponse(
         request=request,
         name="index.html",
