@@ -101,34 +101,37 @@ def landkreis_warnungen(daten):
     if not daten:
         return warnungen
 
-    for kreis in daten.get("warnings", {}).values():
+    for quelle in ("warnings", "vorabInformation"):
 
-        for warnung in kreis:
+        for kreis in daten.get(quelle, {}).values():
 
-            name = warnung.get("regionName")
+            for warnung in kreis:
 
-            if not name:
-                continue
+                name = warnung.get("regionName")
 
-            if name not in warnungen:
-                warnungen[name] = []
+                if not name:
+                    continue
 
-            warnungen[name].append({
-                "regionName": name,
-                "type": warnung.get("type", -1),
-                "level": warnung.get("level", 0),
-                
-                "event": warnung.get("event", ""),
-                "headline": warnung.get("headline", ""),
-                "identifier": warnung.get("identifier") or (
-                    warnung.get("event", "")
-                    + "_"
-                    + str(warnung.get("start"))
-                    + "_"
-                    + str(warnung.get("end"))
-                ),
-                "start": warnung.get("start"),
-                "end": warnung.get("end"),
-            })
+                if name not in warnungen:
+                    warnungen[name] = []
+
+                warnungen[name].append({
+                    "regionName": name,
+                    "type": warnung.get("type", -1),
+                    "level": warnung.get("level", 0),
+                    "event": warnung.get("event", ""),
+                    "headline": warnung.get("headline", ""),
+                    "identifier": warnung.get("identifier") or (
+                        warnung.get("event", "")
+                        + "_"
+                        + str(warnung.get("start"))
+                        + "_"
+                        + str(warnung.get("end"))
+                    ),
+                    "start": warnung.get("start"),
+                    "end": warnung.get("end"),
+                })
+    print("warnings:", len(daten.get("warnings", {})))
+    print("vorabInformation:", len(daten.get("vorabInformation", {})))
 
     return warnungen

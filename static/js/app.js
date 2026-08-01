@@ -110,28 +110,45 @@ function ladeRadar() {
         new Date().getTime();
 
 }
+
 function findeWarnname(warnungen, landkreis) {
+console.log(">>> NEUE findeWarnname AKTIV <<<");
+    // 1. Exakter Treffer
+    if (warnungen[landkreis]) {
+        return landkreis;
+    }
 
-    let suchname = landkreis;
+    // 2. Alle DWD-Namen durchsuchen
+    for (const dwdName of Object.keys(warnungen)) {
 
-    if (!warnungen[suchname]) {
+        let geo = landkreis.toLowerCase();
+        let dwd = dwdName.toLowerCase();
 
-        suchname = "Kreis " + landkreis;
+        // Wörter entfernen, die nur Verwaltungszusätze sind
+        geo = geo
+            .replace(" landkreis", "")
+            .replace(" kreis", "")
+            .replace(" stadt", "")
+            .replace(" städte", "")
+            .replace(" landeshauptstadt", "")
+            .replace(/\s+/g, " ")
+            .trim();
 
-        if (!warnungen[suchname]) {
-            suchname = "Kreis und Stadt " + landkreis;
-        }
+        dwd = dwd
+            .replace(" landkreis", "")
+            .replace(" kreis", "")
+            .replace(" stadt", "")
+            .replace(" städte", "")
+            .replace(" landeshauptstadt", "")
+            .replace(/\s+/g, " ")
+            .trim();
 
-        if (!warnungen[suchname]) {
-            suchname = "Stadt " + landkreis;
-        }
-
-        if (!warnungen[suchname]) {
-            suchname = "Landeshauptstadt " + landkreis;
+        if (geo === dwd) {
+            return dwdName;
         }
     }
 
-    return suchname;
+    return landkreis;
 }
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -164,7 +181,13 @@ console.log("Promise.all erfolgreich");
 console.log("Warnungen:", datenWarnungen);
 console.log("GeoJSON Features:", geojson.features.length);
     let warnungen = datenWarnungen;
+console.log("===== VORAB TEST =====");
 
+Object.entries(warnungen).forEach(([name, liste]) => {
+    if (liste.some(w => w.event && w.event.startsWith("VORABINFORMATION"))) {
+        console.log(name, liste);
+    }
+});
        const geojsonLayer = L.geoJSON(geojson, {
 
             style: function(feature) {
@@ -173,8 +196,20 @@ console.log("GeoJSON Features:", geojson.features.length);
                     feature.properties.NAME_3 ||
                     feature.properties.NAME ||
                     "";
-let suchname = findeWarnname(warnungen, landkreis);
-console.log("Landkreis:", landkreis, "→", suchname, warnungen[suchname]);
+                    console.log("NAME_3 =", feature.properties.NAME_3, "NAME =", feature.properties.NAME);
+                    const mapping = {
+    "Aachen Städte": "Stadt Aachen",
+    "Augsburg Städte": "Stadt Augsburg",
+    "Baden-Baden Städte": "Stadt Baden-Baden",
+    "Ansbach Städte": "Stadt Ansbach",
+    "Amberg Städte": "Stadt Amberg",
+    "Alb-Donau": "Alb-Donau-Kreis"
+};
+let suchname = mapping[landkreis] || findeWarnname(warnungen, landkreis);
+
+console.log("LANDKREIS =", landkreis);
+console.log("SUCHNAME =", suchname);
+console.log("WARNUNGEN =", warnungen[suchname]);
 // console.log(landkreis);
 if (!warnungen[suchname]) console.log("NICHT GEFUNDEN:", landkreis, "→", suchname);
                 let farbe = "#3ec5ff";
@@ -182,11 +217,15 @@ if (!warnungen[suchname]) console.log("NICHT GEFUNDEN:", landkreis, "→", suchn
                            
 
           let maxLevel = 0;
+          let hatHitze = false;
+          let hatVorab = false;
 
-if (warnungen[suchname]) {
+          if (warnungen[suchname]) {
 
     warnungen[suchname].forEach(w => {
-
+if (w.event && w.event.startsWith("VORABINFORMATION")) {
+    console.log("VORAB GEFUNDEN:", landkreis, w.event);
+}
         console.log(
             "Warnung:",
             landkreis,
@@ -197,35 +236,47 @@ if (warnungen[suchname]) {
             "Ereignis:",
             w.event
         );
+console.log("DEBUG:", landkreis, "Typ=", w.type, "Event=", w.event);
+       // Gewitter immer mindestens orange darstellen
+if (w.type === 0) {
+    maxLevel = Math.max(maxLevel, 3);
+}
 
-        // Gewitter immer mindestens orange darstellen
-        if (w.type === 0) {
-            maxLevel = Math.max(maxLevel, 3);
-        }
+// Vorabinformation Unwetter
+else if (
+    w.event &&
+    w.event.toUpperCase().startsWith("VORABINFORMATION")
+) {
+    hatVorab = true;
+}
 
-        // Vorabinformation Unwetter (schraffiert)
-        else if (w.type === 9) {
-            maxLevel = Math.max(maxLevel, 6);
-        }
+// Hitzewarnung
+else if (w.type === 8) {
+    hatHitze = true;
+}
 
-        // Hitzewarnungen gelb
-        else if (w.type === 8) {
-            maxLevel = Math.max(maxLevel, 2);
-        }
-
-        // Alle übrigen Warnungen nach DWD-Level
-        else {
-            maxLevel = Math.max(maxLevel, w.level);
-        }
-
+else {
+    maxLevel = Math.max(maxLevel, w.level);
+}
     });
 
 }
 
 console.log("Landkreis:", landkreis, "maxLevel:", maxLevel);          
 
+// Vorabinformation hat höchste Priorität
+if (hatVorab) {
+    farbe = "#FF9800";
+    opacity = 0.35;
+}
 
-                    if (maxLevel == 2) {
+// Hitzewarnung wie beim DWD
+else if (hatHitze) {
+    farbe = "#C8A2FF";
+    opacity = 0.60;
+}
+
+else if (maxLevel == 2) {
 
     farbe = "#FFD600";
     opacity = 0.55;
@@ -264,7 +315,7 @@ return {
                 
                 
 
-    color: farbe,
+    color: "#6b7280",
     weight: 1,
     fillColor: farbe,
     fillOpacity: opacity
@@ -278,7 +329,17 @@ return {
                     feature.properties.NAME_3 ||
                     feature.properties.NAME ||
                     "Unbekannt";
-let suchname = findeWarnname(warnungen, landkreis);
+                    console.log("NAME_3 =", feature.properties.NAME_3, "NAME =", feature.properties.NAME);
+const mapping = {
+    "Aachen Städte": "Stadt Aachen",
+    "Augsburg Städte": "Stadt Augsburg",
+    "Baden-Baden Städte": "Stadt Baden-Baden",
+    "Ansbach Städte": "Stadt Ansbach",
+    "Amberg Städte": "Stadt Amberg",
+    "Alb-Donau": "Alb-Donau-Kreis"
+};
+
+let suchname = mapping[landkreis] || findeWarnname(warnungen, landkreis);
 layer.bindTooltip(landkreis, {
     sticky: false,
     permanent: false
