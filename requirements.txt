@@ -56,3 +56,4 @@ watchdog==6.0.0
 websockets==16.0
 xyzservices==2026.3.0
 pyproj
+playwright==1.62.0
