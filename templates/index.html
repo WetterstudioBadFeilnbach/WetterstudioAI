@@ -39,6 +39,7 @@
     <a href="#stormtracker">🌩 Stormtracker AI</a>
     <a href="#deutschlandkarte">🗺 Deutschlandkarte</a>
     <a href="#radar">📡 Radar</a>
+    <a href="#sonnenfinsternis">🌘 Sonnenfinsternis 12.08.2026</a>
     <a href="#warnungen">⚠ Warnungen</a>
     <a href="#tornado-center">🌪 Tornado-Center</a>
     <a href="#community">📷 Community</a>
@@ -290,9 +291,11 @@
     </div>
 </section>
 
-<section id="deutschlandkarte-section" class="map-section"></section>
-    <div class="card"></div>
-        <h2>🗺 Deutschlandkarte</h2>
+<section id="deutschlandkarte" class="map-section">
+
+    <div class="card">
+
+        <h2>🗺 Deutschlandkarte TEST 999</h2>
 
         <div class="such-container">
             <input
@@ -305,9 +308,41 @@
         </div>
 
         <div id="deutschlandkarte"></div>
-    </div>
-</section>
 
+    </div>
+
+</section>
+<section id="sonnenfinsternis" class="map-section">
+
+    <div class="card">
+
+        <h2>🌘 Sonnenfinsternis 12. August 2026</h2>
+
+        <p>
+            Klicke auf einen beliebigen Landkreis oder Punkt auf der Deutschlandkarte.
+            Die Daten der Sonnenfinsternis werden hier angezeigt.
+        </p>
+
+        <div id="eclipseInfo">
+
+            <h3 id="eclipseLocation">📍 Noch kein Ort ausgewählt</h3>
+
+            <p id="eclipseBegin">🌞 Beginn: --:-- Uhr</p>
+<p id="eclipseMaximum">🌒 Maximum: --:-- Uhr</p>
+<p id="eclipseEnd">🌅 Ende: --:-- Uhr</p>
+
+            <hr>
+
+            <p id="eclipseCoverage">🌘 Bedeckung: -- %</p>
+<p id="eclipseMagnitude">📐 Magnitude: --</p>
+<p id="eclipseAltitude">☀️ Sonnenhöhe: --°</p>
+<p id="eclipseAzimuth">🧭 Azimut: --°</p>
+
+        </div>
+
+    </div>
+
+</section>
 <section id="radar" class="map-section">
     <div class="card">
         <h2>🛰 Radar</h2>
@@ -319,7 +354,7 @@
                  width="100%">
         </div>
     </div>
-
+</section>
 
    
 
@@ -427,7 +462,7 @@
 
 </footer>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="/static/js/app.js"></script>
+<script src="/static/js/app.js?v=20260809"></script>
 <script src="/static/js/warnticker.js"></script>
 <script src="/static/js/alarm.js"></script>
 <script src="/static/js/feedback.js"></script>
