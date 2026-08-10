@@ -17,6 +17,7 @@ from fastapi import Body
 from datetime import datetime
 import csv
 import asyncio
+from functools import lru_cache
 app = FastAPI(title="Wetterstudio Bad Feilnbach AI")
 
 # Statische Dateien
@@ -46,13 +47,18 @@ async def api_radardownload():
 @app.get("/api/radolanstatus")
 async def api_radolanstatus():
     return radar_status()
+@lru_cache(maxsize=500)
+def sonnenfinsternis_cache(lat: float, lon: float):
+    return berechne_sonnenfinsternis(lat, lon)
+
+
 @app.get("/api/sonnenfinsternis")
 async def api_sonnenfinsternis(lat: float, lon: float):
     return await asyncio.to_thread(
-    berechne_sonnenfinsternis,
-    lat,
-    lon
-)
+        sonnenfinsternis_cache,
+        round(lat, 5),
+        round(lon, 5)
+    )
 @app.get("/api/radarzellen")
 async def api_radarzellen():
     from modules.test_tracking import TESTMODUS, test_zellen 
