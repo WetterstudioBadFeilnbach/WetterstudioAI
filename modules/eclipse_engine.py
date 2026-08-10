@@ -31,12 +31,12 @@ def lade_finsternis(lat, lon, hoehe=500):
 
         page.goto(
             url,
-            wait_until="networkidle",
+            wait_until="domcontentloaded",
             timeout=60000
         )
 
         print("Seite vollständig geladen.")
-
+        page.wait_for_timeout(5000)
         # ---------------------------------------------------------
         # 1. Warten, bis der originale Berechnungsbutton vorhanden ist
         # ---------------------------------------------------------
@@ -242,3 +242,7 @@ if __name__ == "__main__":
 
     print()
     print("Eclipse Engine erfolgreich beendet.")
+
+
+
+
