@@ -11,6 +11,7 @@ from modules.stormtracking import (
     radar_download
 )
 from modules.radolan import radar_status
+from modules.pegel import lade_pegel
 from config import VERSION, FEATURES
 from fastapi import Body
 from datetime import datetime
@@ -70,6 +71,12 @@ async def api_radarzellen():
         daten = json.load(f)
 
     return JSONResponse(daten)
+@app.get("/api/pegel")
+async def api_pegel():
+    daten = lade_pegel()
+    if daten is None:
+        return {"status": "error", "message": "Keine Pegeldaten verfügbar"}
+    return {"status": "ok", "daten": daten}
 # Neue Wetter-API
 @app.get("/api/wetter")
 async def api_wetter(
@@ -191,3 +198,4 @@ async def feedback(data: dict = Body(...)):
     return {
         "status": "ok"
     }
+
