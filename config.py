@@ -25,9 +25,16 @@ FEATURES = {
     "Live-DWD-Ticker": True,
     "Wetterstudio-AI-Laufzeile": True,
     "Tornado-Center": True,
+    "Hochwasserportal": True,
+    "Pegel": True,
+    "Pegelverlauf": True,
+    "Hochwassermarken": True,
+    "Webcam": True,
+    "HND-Lagekarte": True,
     "KI-Wetterberichte": False,
     "Wetterkarten-Generator": False,
     "TV-Modus": False,
     "Favoriten": False,
     "Smartphone-Version": False,
 }
+
