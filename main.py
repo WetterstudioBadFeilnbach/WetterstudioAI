@@ -4,7 +4,6 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import JSONResponse
 from modules.dwd import lade_warnungen, statistik, landkreis_warnungen
 from modules.openmeteo import aktuelle_wetterdaten
-from modules.sonnenfinsternis import berechne_sonnenfinsternis
 from modules.stormtracking import (
     stormtracking_status,
     radar_download_status,
@@ -47,18 +46,6 @@ async def api_radardownload():
 @app.get("/api/radolanstatus")
 async def api_radolanstatus():
     return radar_status()
-@lru_cache(maxsize=500)
-def sonnenfinsternis_cache(lat: float, lon: float):
-    return berechne_sonnenfinsternis(lat, lon)
-
-
-@app.get("/api/sonnenfinsternis")
-async def api_sonnenfinsternis(lat: float, lon: float):
-    return await asyncio.to_thread(
-        sonnenfinsternis_cache,
-        round(lat, 5),
-        round(lon, 5)
-    )
 @app.get("/api/radarzellen")
 async def api_radarzellen():
     from modules.test_tracking import TESTMODUS, test_zellen 
