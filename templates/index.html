@@ -808,12 +808,126 @@ setInterval(ladePegelAnzeige, 900000);
 setInterval(aktualisiereWebcam, 300000);
 </script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const lagekarteElement = document.getElementById("hnd-lagekarte");
+
+    if (!lagekarteElement) {
+        console.error("HND-Lagekarte: Container nicht gefunden.");
+        return;
+    }
+
+    const lagekarte = L.map("hnd-lagekarte", {
+        zoomControl: true
+    }).setView([47.7830, 12.0060], 15);
+
+    const dop20 = L.tileLayer.wms(
+        "https://geoservices.bayern.de/od/wms/dop/v1/dop20?",
+        {
+            layers: "by_dop20c",
+            styles: "",
+            format: "image/png",
+            transparent: false,
+            version: "1.1.1",
+            attribution: "Bayerische Vermessungsverwaltung"
+        }
+    ).addTo(lagekarte);
+
+    const markerIcon = L.icon({
+        iconUrl: "https://www.hnd.bayern.de/images/symbole/Map_Pin_with_Shadow.png",
+        iconSize: [44, 50],
+        iconAnchor: [0, 50],
+        popupAnchor: [22, -45]
+    });
+
+    const messstellenMarker = L.marker(
+        [47.7830, 12.0060],
+        { icon: markerIcon }
+    ).addTo(lagekarte);
+
+    messstellenMarker.bindPopup(
+        "<strong>Bad Feilnbach / Jenbach</strong><br>" +
+        "Messstellennummer: 18284504<br>" +
+        "Gewässer: Jenbach"
+    );
+
+    lagekarteElement.addEventListener("click", function () {
+
+        const modal = document.getElementById("hnd-lagekarte-modal");
+        const gross = document.getElementById("hnd-lagekarte-gross");
+
+        if (!modal || !gross) {
+            return;
+        }
+
+        modal.style.display = "block";
+
+        if (!gross.dataset.initialized) {
+
+            const grosseKarte = L.map("hnd-lagekarte-gross", {
+                zoomControl: true
+            }).setView([47.7830, 12.0060], 15);
+
+            L.tileLayer.wms(
+                "https://geoservices.bayern.de/od/wms/dop/v1/dop20?",
+                {
+                    layers: "by_dop20c",
+                    styles: "",
+                    format: "image/png",
+                    transparent: false,
+                    version: "1.1.1",
+                    attribution: "Bayerische Vermessungsverwaltung"
+                }
+            ).addTo(grosseKarte);
+
+            L.marker(
+                [47.7830, 12.0060],
+                { icon: markerIcon }
+            ).addTo(grosseKarte)
+            .bindPopup(
+                "<strong>Bad Feilnbach / Jenbach</strong><br>" +
+                "Messstellennummer: 18284504<br>" +
+                "Gewässer: Jenbach"
+            );
+
+            gross.dataset.initialized = "true";
+            window.hndGrosseLagekarte = grosseKarte;
+
+            setTimeout(function () {
+                grosseKarte.invalidateSize();
+            }, 100);
+        }
+        else if (window.hndGrosseLagekarte) {
+            setTimeout(function () {
+                window.hndGrosseLagekarte.invalidateSize();
+            }, 100);
+        }
+    });
+
+    const schliessen = document.getElementById("hnd-lagekarte-schliessen");
+
+    if (schliessen) {
+        schliessen.addEventListener("click", function (event) {
+            event.stopPropagation();
+
+            const modal = document.getElementById("hnd-lagekarte-modal");
+
+            if (modal) {
+                modal.style.display = "none";
+            }
+        });
+    }
+
+});
+</script>
 <script src="/static/js/app.js?v=20260809"></script>
 <script src="/static/js/warnticker.js"></script>
 <script src="/static/js/alarm.js"></script>
 <script src="/static/js/feedback.js"></script>
 </body>
 </html>
+
 
 
 
