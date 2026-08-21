@@ -161,7 +161,8 @@ ladeWetter(
     12.0094,
     "Bad Feilnbach"
 );
-    const karte = document.getElementById("deutschlandkarte");
+    // Alte Deutschlandkarte deaktiviert – neue DWD-Warnkarte läuft über warnkarte.js
+    const karte = null;
     const suche = document.getElementById("landkreisSuche");
     const suchErgebnisse = document.getElementById("suchErgebnisse");
     let ausgewaehlt = -1;
@@ -662,3 +663,4 @@ if (balken) {
     .catch(error => console.error(error));
 
 });
+

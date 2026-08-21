@@ -16,7 +16,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (svgRoot && !svgRoot.querySelector("#vorabSchraffur")) {
         svgRoot.insertAdjacentHTML("afterbegin", vorabPattern);
     }
-    const antwort = await fetch("/api/warnungen");
+    const antwort = await fetch("/api/dwd-warnungen");
     const warnungen = await antwort.json();
     const mappingAntwort = await fetch("/static/mapping.json");
     const mapping = await mappingAntwort.json();
@@ -303,6 +303,7 @@ return {
         });
 
 });
+
 
 
 

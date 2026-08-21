@@ -32,6 +32,10 @@ async def api_warnungen():
 
     daten = lade_warnungen()
     return landkreis_warnungen(daten)
+
+@app.get("/api/dwd-warnungen")
+async def api_dwd_warnungen():
+    return lade_warnungen()
 @app.get("/api/stormtracking")
 async def api_stormtracking():
     return stormtracking_status()
@@ -198,4 +202,5 @@ async def feedback(data: dict = Body(...)):
     return {
         "status": "ok"
     }
+
 
