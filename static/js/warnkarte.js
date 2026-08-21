@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", async () => {
 
     // Karte erzeugen
-    const karte = L.map("karte").setView([51.3, 10.3], 6);
+    const karte = L.map("karte").setView([51.0, 10.3], 4);
 
     // OpenStreetMap
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -73,6 +73,10 @@ console.log(Object.keys(Object.values(warnungen.warnings)[0][0]));
     fetch("/static/geojson/landkreise_neu.geojson")
         .then(r => r.json())
         .then(data => {
+
+          // Karte automatisch exakt an die Deutschland-Landkreise anpassen
+          const deutschlandGrenzen = L.geoJSON(data).getBounds();
+          karte.fitBounds(deutschlandGrenzen, { padding: [10, 10] });
 
           L.geoJSON(data, {
             renderer: svgRenderer,
@@ -323,6 +327,11 @@ return {
         });
 
 });
+
+
+
+
+
 
 
 
