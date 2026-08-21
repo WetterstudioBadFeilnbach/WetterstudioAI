@@ -31,7 +31,7 @@ templates = Jinja2Templates(directory="templates")
 async def api_warnungen():
 
     daten = lade_warnungen()
-    return landkreis_warnungen(daten)
+    return daten
 @app.get("/api/stormtracking")
 async def api_stormtracking():
     return stormtracking_status()
@@ -198,4 +198,6 @@ async def feedback(data: dict = Body(...)):
     return {
         "status": "ok"
     }
+
+
 
