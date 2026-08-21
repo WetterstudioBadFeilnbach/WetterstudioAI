@@ -1,46 +1,829 @@
 <!DOCTYPE html>
 <html lang="de">
+
 <head>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="/static/leaflet/leaflet.css">
-    <title>Wetterstudio AI Neu</title>
-
-    <style>
-        body{
-            margin:0;
-            background:#0f172a;
-            color:white;
-            font-family:Arial,Helvetica,sans-serif;
-        }
-
-        h1{
-            text-align:center;
-            margin-top:30px;
-        }
-
-        #karte{
-            width:95%;
-            height:700px;
-            margin:30px auto;
-            border:3px solid #3b82f6;
-            border-radius:12px;
-            background:#1e293b;
-        }
-</style>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ titel }}</title>
+<link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/static/css/style.css">
+ 
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 </head>
 
 <body>
+<div id="top"></div>
+<audio id="alarmSound" preload="auto">
+    <source src="/static/audio/alarm.mp3" type="audio/mpeg">
+</audio>
 
-<h1>🌩 Wetterstudio AI – Neue DWD-Warnkarte</h1>
+<div id="alarmPopup" class="alarm-popup">
 
-<div id="karte">
-    Deutschlandkarte wird hier aufgebaut…
+
+    <div class="alarm-title">
+        ­ƒÜ¿ Neue Unwetterwarnung
+    </div>
+
+    <div id="alarmText">
+        Neue Warnung erkannt.
+    </div>
+
 </div>
+<header>
+    <h1>­ƒî® Wetterstudio Bad Feilnbach AI</h1>
+    <p>Die moderne Wetterplattform f├╝r Bayern und Deutschland</p>
+</header>
+
+<nav>
+    <a href="#top">­ƒÅá Start</a>
+    <a href="#stormtracker">­ƒî® Stormtracker AI</a>
+    <a href="#deutschlandkarte">­ƒù║ Deutschlandkarte</a>
+    <a href="#radar">­ƒôí Radar</a>
+    <a href="#warnungen">ÔÜá Warnungen</a>
+    <a href="#tornado-center">­ƒî¬ Tornado-Center</a>
+    <a href="#community">­ƒôÀ Community</a>
+    <a href="#pegel">­ƒîè Hochwasserportal</a>
+</nav>
+<button id="alarm-test" class="alarm-test-button">
+    ­ƒöö Alarm testen
+</button>
+<div class="live-ticker">
+
+    <span class="ticker-title">­ƒÜ¿ DWD LIVE</span>
+
+    <div id="warnTicker">
+        Lade DWD-Warnungen...
+    </div>
+
+</div>
+
+<div class="info-ticker">
+
+   <span class="ticker-title">­ƒôó Aktuellste DWD-Warnung</span>
+
+    <div id="infoTicker">
+        {{ ticker_info }}
+    </div>
+
+</div>
+
+<main>
+<section class="beta-box">
+
+    <div class="beta-header">
+        ­ƒÜº Wetterstudio Bad Feilnbach AI ÔÇô <strong>Version 0.9 Beta</strong>
+        <span class="beta-badge">­ƒƒó Beta 0.9</span>
+    </div>
+
+    <p>
+        Herzlich willkommen im neuen Wetterstudio Bad Feilnbach AI!
+        Diese Plattform befindet sich aktuell in der ├Âffentlichen Testphase.
+        Viele Funktionen stehen bereits zur Verf├╝gung ÔÇô weitere folgen Schritt f├╝r Schritt.
+    </p>
+
+    <h3>­ƒƒó Bereits verf├╝gbar</h3>
+
+    <ul>
+        <li>­ƒî® DWD-Warnungen</li>
+        <li>­ƒù║ Deutschlandkarte</li>
+        <li>­ƒôí Live-Radar</li>
+        <li>­ƒîí Live-Wetterdaten</li>
+        <li>­ƒÆ¿ Wind &amp; Windb├Âen</li>
+        <li>­ƒîº Niederschlag</li>
+        <li>­ƒÆº Luftfeuchtigkeit</li>
+        <li>­ƒôê Luftdruck</li>
+        <li>­ƒîí Gef├╝hlte Temperatur</li>
+        <li>­ƒîñ Live-Wettertext</li>
+        <li>­ƒÄ¿ Wetter-Icons</li>
+        <li>­ƒôó Live-DWD-Ticker</li>
+        <li>­ƒô░ Wetterstudio-AI-Laufzeile</li>
+        <li>­ƒÜ¿ Alarmfunktion</li>
+        <li>­ƒöè Alarmton</li>
+        <li>­ƒî¬ Tornado-Center</li>
+        <li>­ƒôØ Beta-Feedback</li>
+        <li>­ƒôè Entwicklungsbalken</li>
+        <li>­ƒùú Sprachansagen f├╝r neue DWD-Warnungen</li>
+        <li>­ƒöè Alarm-Einstellungen (Ton / Sprache)</li>
+        <li>­ƒôû Verbesserte Warnungs-Legende</li>
+    </ul>
+
+    <h4>­ƒîè Hochwasserportal</h4>
+
+    <ul>
+        <li>­ƒôì Aktueller Pegel Bad Feilnbach / Jenbach</li>
+        <li>­ƒôè Pegelverlauf</li>
+        <li>ÔÜá´©Å Hochwassermarken</li>
+        <li>­ƒô╣ Webcam der Messstelle</li>
+        <li>­ƒù║´©Å Interaktive HND-Lagekarte</li>
+    </ul>
+
+    <h3>­ƒƒí In Entwicklung</h3>
+
+    <ul>
+        <li>­ƒî® Stormtracker AI</li>
+        <li>­ƒù║ Wetterkarten-Plattform f├╝r Wetterk├╝che Bayern, Wetterstudio Bad Feilnbach, Amperwetter und weitere Wetterangebote</li>
+        <li>­ƒñû KI-Wetterberichte</li>
+        <li>ÔÜí Live-Blitzkarte</li>
+        <li>­ƒî¬ Tornado-Livekarte</li>
+        <li>­ƒôè Tornado-Statistiken</li>
+        <li>­ƒø░ Satellitenbilder</li>
+        <li>­ƒîº Erweiterte Niederschlagsauswertung</li>
+        <li>Ôøê Unwetter-Prognosen</li>
+        <li>­ƒôà 3-, 7- und 14-Tage-Trend</li>
+        <li>­ƒîí Hitze- und K├ñltewarnungen</li>
+        <li>­ƒôì Pers├Ânliche Lieblingsorte</li>
+    </ul>
+
+    <h3>­ƒöÁ Geplant</h3>
+
+    <ul>
+        <li>­ƒô║ TV-Modus</li>
+        <li>­ƒô▒ Weiterer Ausbau f├╝r Smartphone und mobile Nutzung</li>
+        <li>­ƒô© Erweiterte Community-Wetterfotos</li>
+        <li>­ƒôê Weitere Wetterstatistiken und Analysefunktionen</li>
+        <li>­ƒÜÇ Weitere Funktionen f├╝r Wetterinteressierte und Stormchaser</li>
+    </ul>
+
+    <h3>­ƒôê Entwicklungsstand</h3>
+
+    <div class="progress">
+        <div
+            id="progressBar"
+            class="progress-bar"
+            data-prozent="{{ entwicklung }}"
+        >
+            {{ entwicklung }} %
+        </div>
+    </div>
+
+    <h3>­ƒù║´©Å Entwicklungs-Roadmap</h3>
+
+    <div class="roadmap">
+
+        <div class="roadmap-item done">
+            <span>Ô£à Version 0.9 Beta</span>
+            <small>├ûffentliche Beta mit Wetter, Warnungen, Radar und Hochwasserportal</small>
+        </div>
+
+        <div class="roadmap-item work">
+            <span>­ƒƒí Weiterentwicklung Beta 0.9</span>
+            <small>Stormtracker AI und weitere Wetter- und Analysefunktionen</small>
+        </div>
+
+        <div class="roadmap-item work">
+            <span>­ƒù║´©Å Gemeinsame Wetterkarten-Plattform</span>
+            <small>Wetterk├╝che Bayern, Wetterstudio Bad Feilnbach, Amperwetter und weitere Wetterangebote</small>
+        </div>
+
+        <div class="roadmap-item plan">
+            <span>­ƒñû KI-Wetter &amp; Analyse</span>
+            <small>KI-Wetterberichte, Unwetteranalysen, Blitz- und Tornadofunktionen</small>
+        </div>
+
+        <div class="roadmap-item finish">
+            <span>­ƒÄë Version 1.0</span>
+            <small>Ausbau zur vollst├ñndigen Wetterstudio-Plattform</small>
+        </div>
+
+    </div>
+
+    <h3>­ƒÜÇ Nach der Beta geht es weiter!</h3>
+
+    <p>
+        Das Wetterstudio Bad Feilnbach AI wird kontinuierlich erweitert.
+        Im Mittelpunkt stehen Stormtracking, intelligente KI-Wetterberichte,
+        professionelle Wetterkarten, Live-Wetterdaten, Hochwasserinformationen
+        sowie weitere Analyse- und Warnfunktionen.
+    </p>
+
+    <p>
+        ­ƒÆ¼ Fehler gefunden oder eine Idee?
+        Wir freuen uns ├╝ber jedes Feedback unserer Beta-Tester.
+    </p>
+
+    <p>
+        ÔØñ´©Å Vielen Dank an alle Beta-Tester f├╝r eure Unterst├╝tzung
+        und viel Freude mit der ├Âffentlichen Beta 0.9!
+    </p>
+
+</section>
+<section id="warnungen" class="live-dashboard">
+<div class="card">
+    <h2>­ƒôì Ort</h2>
+   <h3 id="ort">{{ ort }}</h3>
+</div>
+<div class="card">
+<h2>­ƒîí Temperatur</h2>
+<h3 id="temperatur">{{ temperatur }}</h3>
+</div>
+<div class="card">
+    <h2>­ƒîñ Wetter</h2>
+
+    <div id="wettericon"
+         style="font-size:70px;margin-top:10px;margin-bottom:10px;">
+        ÔÿÇ´©Å
+    </div>
+
+    <h3 id="wettertext">{{ wettertext }}</h3>
+
+</div>
+<div class="card">
+<h2>­ƒÆ¿ Wind</h2>
+<h3 id="wind">{{ wind }}</h3>
+</div>
+<div class="card">
+<h2>­ƒÆ¿ Windb├Âen</h2>
+<h3 id="boeen">{{ boeen }}</h3>
+</div>
+<div class="card">
+<h2>­ƒîº Niederschlag</h2>
+<h3 id="regen">{{ regen }}</h3>
+</div>
+<div class="card">
+<h2>­ƒôê Luftdruck</h2>
+<h3 id="luftdruck">{{ luftdruck }}</h3>
+</div>
+<div class="card">
+<h2>­ƒÆº Luftfeuchtigkeit</h2>
+<h3 id="luftfeuchte">{{ luftfeuchte }}</h3>
+</div>
+
+<div class="card">
+<h2>­ƒîí´©Å Gef├╝hlte Temperatur</h2>
+<h3 id="gefuehlt">{{ gefuehlt }}</h3>
+</div>
+<div class="card">
+<h2>ÔÜá Warnungen</h2>
+<h3>{{ warnungen }}</h3>
+</div>
+<div class="card">
+<h2>­ƒƒí Gelbe Warnungen</h2>
+<h3>{{ gelb }}</h3>
+</div>
+<div class="card">
+<h2>­ƒƒá Orange Warnungen</h2>
+<h3>{{ orange }}</h3>
+</div>
+<div class="card">
+<h2>­ƒö┤ Rote Warnungen</h2>
+<h3>{{ rot }}</h3>
+</div>
+<div class="card">
+<h2>­ƒƒú Violette Warnungen</h2>
+<h3>{{ violett }}</h3>
+</div>
+<div class="card">
+<h2>­ƒî® Gewitter</h2>
+<h3>{{ gewitter }}</h3>
+</div>
+
+<div class="card">
+<h2>­ƒî¬ Tornados</h2>
+<h3>{{ tornados }}</h3>
+</div>
+<div class="card">
+<h2>­ƒî¿ Schnee</h2>
+<h3>{{ schnee }}</h3>
+</div>
+<div class="card">
+<h2>­ƒîí Hitze</h2>
+<h3>{{ hitze }}</h3>
+</div>
+<div class="card">
+<h2>­ƒÆ¿ Sturm</h2>
+<h3>{{ sturm }}</h3>
+</div>
+<div class="card">
+<h2>­ƒîº Starkregen</h2>
+<h3>{{ starkregen }}</h3>
+</div>
+</section>
+
+<section id="stormtracker" class="dashboard">
+    <div class="card">
+        <h2>­ƒî® Stormtracker AI</h2>
+        <p>Live-Warnungen und automatische Analyse.</p>
+    </div>
+</section>
+
+<section id="deutschlandkarte" class="map-section">
+
+    <div class="card">
+
+        <h2>­ƒù║ Deutschlandkarte TEST 999</h2>
+
+        <div class="such-container">
+            <input
+                type="text"
+                id="landkreisSuche"
+                placeholder="­ƒöì Landkreis suchen..."
+                autocomplete="off">
+
+            <div id="suchErgebnisse"></div>
+        </div>
+
+        <div id="deutschlandkarte"></div>
+
+    </div>
+
+</section>
+<section id="radar" class="map-section">
+    <div class="card">
+        <h2>­ƒø░ Radar</h2>
+
+        <div id="radar-container">
+            <img id="radarbild"
+                 src=""
+                 alt="Radar"
+                 width="100%">
+        </div>
+    </div>
+</section>
+
+   
+
+  
+
+
+   <section id="community">
+    <section id="pegel" style="width:95%;margin:30px auto 50px;background:#1e293b;border:3px solid #0ea5e9;border-radius:12px;padding:25px;box-sizing:border-box;">
+    <h2 style="text-align:center;margin-top:0;">­ƒîè Pegel Bad Feilnbach / Jenbach</h2>
+
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:15px;">
+        <div style="background:#172554;border-radius:10px;padding:20px;text-align:center;">
+            <div>Aktueller Pegelstand</div>
+            <div id="pegel-wert" style="font-size:38px;font-weight:bold;margin:10px 0;">-- cm</div>
+            <small id="pegel-zeit">--</small>
+        </div>
+
+        <div id="pegel-trend-karte" title="Trend-Informationen anzeigen" style="background:#172554;border-radius:10px;padding:20px;text-align:center;cursor:pointer;">
+            <div>Trend</div>
+            <div id="pegel-trend" style="font-size:30px;font-weight:bold;margin:10px 0;">--</div>
+        </div>
+
+        <div id="pegel-lage-karte" title="Informationen zur aktuellen Lage anzeigen" style="background:#172554;border-radius:10px;padding:20px;text-align:center;cursor:pointer;">
+            <div>Lage</div>
+            <div id="pegel-lage" style="font-size:22px;font-weight:bold;margin:10px 0;">--</div>
+        </div>
+
+        <div id="pegel-messstelle-karte" title="Informationen zur Messstelle anzeigen" style="background:#172554;border-radius:10px;padding:20px;text-align:center;cursor:pointer;">
+            <div>Messstelle</div>
+            <div style="font-size:28px;font-weight:bold;margin:10px 0;">18284504</div>
+            <small>Jenbach</small>
+        </div>
+    </div>
+
+    <div style="background:#111827;border-radius:10px;padding:20px;margin-top:20px;">
+        <h3>­ƒôè Pegelverlauf ÔÇô letzte 12 Messungen</h3>
+        <div id="pegel-verlauf">Pegeldaten werden geladenÔÇª</div>
+    </div>
+
+
+    <div id="hochwassermarken-bereich" style="background:#111827;border-radius:10px;padding:20px;margin-top:20px;">
+        <h3>ÔÜá´©Å Hochwassermarken ÔÇô Bad Feilnbach / Jenbach</h3>
+        <div id="hochwassermarken-aktuell" style="text-align:center;margin-bottom:18px;">
+            Hochwassermarken werden geladenÔÇª
+        </div>
+        <div id="hochwassermarken-liste"></div>
+        <div style="text-align:center;margin-top:15px;font-size:13px;opacity:.75;">
+            Offizielle Hochwassermarken des Hochwassernachrichtendienstes Bayern
+        </div>
+    </div>
+    <div style="background:#111827;border-radius:10px;padding:20px;margin-top:20px;text-align:center;">
+        <h3>­ƒô╣ Webcam Bad Feilnbach / Jenbach</h3>
+        <img id="pegel-webcam"
+             src="https://webcams.hnd.bayern.de/ro/B.Feilnb.-Jenbach/webcam.jpg"
+             alt="Webcam Bad Feilnbach / Jenbach"
+             style="width:100%;max-width:650px;height:auto;border-radius:8px;border:2px solid #0ea5e9;">
+        <div style="margin-top:10px;font-size:13px;opacity:.8;">
+            Livebild der Messstelle ┬À Hochwassernachrichtendienst Bayern
+        </div>
+    </div>
+    <div style="background:#111827;border-radius:10px;padding:20px;margin-top:20px;text-align:center;">
+        <h3>­ƒû╝´©Å Foto der Messstelle Bad Feilnbach / Jenbach</h3>
+        <img src="https://files.hnd.bayern.de/pegel_fotos/18284504.jpg"
+             alt="Foto der Messstelle Bad Feilnbach / Jenbach"
+             style="width:100%;max-width:650px;height:auto;border-radius:8px;border:2px solid #0ea5e9;">
+        <div style="margin-top:10px;font-size:13px;opacity:.8;">
+            Foto der Messstelle ┬À Hochwassernachrichtendienst Bayern
+        </div>
+    </div>
+    <div style="background:#111827;border-radius:10px;padding:20px;margin-top:20px;text-align:center;">
+        <h3>­ƒù║´©Å Lage der Messstelle Bad Feilnbach / Jenbach</h3>
+
+        <div
+            id="hnd-lagekarte"
+            title="Klicken zum Vergr├Â├ƒern"
+            style="width:100%;max-width:650px;height:420px;margin:0 auto;border-radius:8px;border:2px solid #0ea5e9;overflow:hidden;cursor:pointer;">
+        </div>
+
+        <div style="margin-top:10px;font-size:13px;opacity:.8;">
+            Amtliche Kartengrundlage ┬À Bayerische Vermessungsverwaltung / Hochwassernachrichtendienst Bayern
+        </div>
+    </div>
+
+    <div id="hnd-lagekarte-modal"
+         style="display:none;position:fixed;z-index:9999;inset:0;background:rgba(0,0,0,.85);padding:30px;box-sizing:border-box;">
+        <div style="position:relative;width:100%;height:100%;max-width:1200px;margin:auto;background:#111827;border-radius:12px;border:2px solid #0ea5e9;overflow:hidden;">
+            <button id="hnd-lagekarte-schliessen"
+                    type="button"
+                    style="position:absolute;right:10px;top:10px;z-index:10000;width:40px;height:40px;border:0;border-radius:50%;font-size:24px;cursor:pointer;">
+                ├ù
+            </button>
+            <div id="hnd-lagekarte-gross" style="width:100%;height:100%;"></div>
+        </div>
+    </div>
+    <div style="text-align:center;margin-top:20px;font-size:13px;line-height:1.7;opacity:.85;">
+    <div>Quelle: Hochwassernachrichtendienst Bayern ┬À Messstelle 18284504</div>
+    <div>Bild-/Kartengrundlage: Hochwassernachrichtendienst Bayern ┬À Bayerische Vermessungsverwaltung</div>
+    <div>Aufbereitung &amp; Darstellung: Wetterstudio Bad Feilnbach AI ┬À Markus Michels</div>
+    <div>┬® Markus Michels ÔÇô Wetterstudio Bad Feilnbach</div>
+</div>
+</section>
+<section id="tornado-center" class="content-section">
+
+    <h2>­ƒî¬ Tornado-Center</h2>
+
+    <div class="coming-soon-card">
+
+        <h3>­ƒÜº In Entwicklung</h3>
+
+        <p>
+            Dieser Bereich wird Bestandteil der ├Âffentlichen Beta 0.9.
+        </p>
+
+        <div class="tornado-grid">
+
+            <div class="placeholder-card">
+                <h4>­ƒî¬ DWD-Tornadowarnungen</h4>
+                <p>Live-Anzeige geplanter Warnungen.</p>
+               {% if tornado_warnungen %}
+
+<ul class="tornado-list">
+
+{% for warnung in tornado_warnungen %}
+
+<li>
+<strong>{{ warnung.regionName if warnung.regionName else warnung.headline }}</strong><br>
+{{ warnung.event }}
+</li>
+
+{% endfor %}
+
+</ul>
+
+{% else %}
+
+<p>Ô£à Aktuell liegen keine Tornadowarnungen des DWD vor.</p>
+
+{% endif %} 
+            </div>
+
+            <div class="placeholder-card">
+                <h4>­ƒù║ Tornado-Karte</h4>
+                <p>Interaktive ├£bersicht aktueller Ereignisse.</p>
+            </div>
+
+            <div class="placeholder-card">
+                <h4>­ƒô© Sichtungen</h4>
+                <p>Gemeldete Tornados und Nutzerberichte.</p>
+            </div>
+
+            <div class="placeholder-card">
+                <h4>­ƒôè Statistik</h4>
+                <p>Auswertungen und historische Ereignisse.</p>
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+<div class="card">
+    <h2>­ƒôÀ Community</h2>
+
+    <p>
+        Fotos, Meldungen und Feedback unserer Wetterbeobachter.
+    </p>
+
+    <h3>­ƒº¬ Beta-Feedback</h3>
+
+    <form id="feedbackForm">
+
+        <input
+            type="text"
+            id="name"
+            placeholder="Name (optional)">
+
+        <textarea
+            id="feedback"
+            rows="5"
+            placeholder="Fehler, Ideen oder Verbesserungsvorschl├ñge..."></textarea>
+
+        <button type="submit">
+            ­ƒô¿ Feedback senden
+        </button>
+
+    </form>
+
+    <div id="feedbackStatus"></div>
+
+</div>
+</section>
+</main>
+
+<footer>
+
+<p>
+┬® 2026 Wetterstudio Bad Feilnbach
+</p>
+
+</footer>
 <script>
+async function ladePegelAnzeige() {
+    try {
+        const response = await fetch("/api/pegel");
+        const result = await response.json();
+
+        if (result.status !== "ok") {
+            throw new Error("Keine Pegeldaten verf├╝gbar");
+        }
+
+        const daten = result.daten;
+
+        document.getElementById("pegel-wert").textContent =
+            daten.wasserstand_cm + " cm";
+
+        document.getElementById("pegel-zeit").textContent =
+            "Letzte Messung: " + daten.zeit;
+
+        if (daten.trend === "steigend") {
+            document.getElementById("pegel-trend").textContent = "Ôåù steigend";
+        } else if (daten.trend === "fallend") {
+            document.getElementById("pegel-trend").textContent = "Ôåÿ fallend";
+        } else {
+            document.getElementById("pegel-trend").textContent = "ÔåÆ gleich";
+        }
+
+        document.getElementById("pegel-lage").textContent = daten.lage;
+
+        const verlauf = document.getElementById("pegel-verlauf");
+    verlauf.innerHTML = "";
+
+    const messungen = [...daten.verlauf].reverse();
+    const werte = messungen.map(m => Number(m.wasserstand_cm));
+    const maxWert = Math.max(...werte);
+    const minWert = Math.min(...werte);
+    const differenz = Math.max(1, maxWert - minWert);
+
+    const chart = document.createElement("div");
+    chart.style.position = "relative";
+    chart.style.width = "100%";
+    chart.style.height = "300px";
+    chart.style.marginTop = "15px";
+    chart.style.background = "#0b1220";
+    chart.style.borderRadius = "10px";
+    chart.style.overflow = "hidden";
+    chart.style.border = "1px solid #24324a";
+
+    const titel = document.createElement("div");
+    titel.textContent = "­ƒôê Verlauf der letzten 3 Stunden";
+    titel.style.fontWeight = "700";
+    titel.style.fontSize = "15px";
+    titel.style.padding = "12px 14px";
+    titel.style.color = "#e5e7eb";
+    chart.appendChild(titel);
+
+    const grafik = document.createElement("div");
+    grafik.style.position = "absolute";
+    grafik.style.left = "55px";
+    grafik.style.right = "20px";
+    grafik.style.top = "55px";
+    grafik.style.bottom = "38px";
+
+    for (let i = 0; i < 4; i++) {
+        const linie = document.createElement("div");
+        linie.style.position = "absolute";
+        linie.style.left = "0";
+        linie.style.right = "0";
+        linie.style.top = (i * 33.33) + "%";
+        linie.style.borderTop = "1px solid rgba(148,163,184,0.15)";
+        grafik.appendChild(linie);
+    }
+
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("width", "100%");
+    svg.setAttribute("height", "100%");
+    svg.setAttribute("viewBox", "0 0 1000 220");
+    svg.setAttribute("preserveAspectRatio", "none");
+    svg.style.position = "absolute";
+    svg.style.left = "0";
+    svg.style.top = "0";
+
+    const punkte = messungen.map((messung, index) => {
+        const x = messungen.length === 1 ? 500 : index * (1000 / (messungen.length - 1));
+        const norm = (Number(messung.wasserstand_cm) - minWert) / differenz;
+        const y = 185 - (norm * 140);
+        return { x, y, messung };
+    });
+
+    const flaeche = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+    flaeche.setAttribute("points", "0,185 " + punkte.map(p => p.x + "," + p.y).join(" ") + " 1000,185");
+    flaeche.setAttribute("fill", "rgba(14,165,233,0.12)");
+    svg.appendChild(flaeche);
+
+    const linienzug = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+    linienzug.setAttribute("points", punkte.map(p => p.x + "," + p.y).join(" "));
+    linienzug.setAttribute("fill", "none");
+    linienzug.setAttribute("stroke", "#0ea5e9");
+    linienzug.setAttribute("stroke-width", "5");
+    linienzug.setAttribute("stroke-linecap", "round");
+    linienzug.setAttribute("stroke-linejoin", "round");
+    svg.appendChild(linienzug);
+
+    punkte.forEach((p, index) => {
+        const punkt = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        punkt.setAttribute("cx", p.x);
+        punkt.setAttribute("cy", p.y);
+        punkt.setAttribute("r", index === 0 ? "9" : "6");
+        punkt.setAttribute("fill", "#0ea5e9");
+        punkt.setAttribute("stroke", "#ffffff");
+        punkt.setAttribute("stroke-width", index === 0 ? "3" : "2");
+        svg.appendChild(punkt);
+    });
+
+    grafik.appendChild(svg);
+    chart.appendChild(grafik);
+
+    const maxLabel = document.createElement("div");
+    maxLabel.textContent = maxWert + " cm";
+    maxLabel.style.position = "absolute";
+    maxLabel.style.left = "8px";
+    maxLabel.style.top = "58px";
+    maxLabel.style.fontSize = "12px";
+    maxLabel.style.color = "#94a3b8";
+    chart.appendChild(maxLabel);
+
+    const minLabel = document.createElement("div");
+    minLabel.textContent = minWert + " cm";
+    minLabel.style.position = "absolute";
+    minLabel.style.left = "8px";
+    minLabel.style.bottom = "48px";
+    minLabel.style.fontSize = "12px";
+    minLabel.style.color = "#94a3b8";
+    chart.appendChild(minLabel);
+
+    const zeiten = document.createElement("div");
+    zeiten.style.position = "absolute";
+    zeiten.style.left = "55px";
+    zeiten.style.right = "20px";
+    zeiten.style.bottom = "10px";
+    zeiten.style.display = "flex";
+    zeiten.style.justifyContent = "space-between";
+    zeiten.style.fontSize = "11px";
+    zeiten.style.color = "#94a3b8";
+
+    [0, 2, 4, 6, 8, 10, 11].filter(index => index < messungen.length).forEach(index => {
+        const label = document.createElement("span");
+        label.textContent = messungen[index].zeit.slice(-5);
+        zeiten.appendChild(label);
+    });
+
+    chart.appendChild(zeiten);
+    verlauf.appendChild(chart);
+
+    const aktuelleInfo = document.createElement("div");
+    aktuelleInfo.style.marginTop = "10px";
+    aktuelleInfo.style.textAlign = "center";
+    aktuelleInfo.style.fontSize = "13px";
+    aktuelleInfo.style.color = "#94a3b8";
+    aktuelleInfo.textContent = "Aktuell: " + messungen[messungen.length - 1].wasserstand_cm + " cm ┬À Messzeit: " + messungen[messungen.length - 1].zeit;
+    verlauf.appendChild(aktuelleInfo);
+        const markenBereich = document.getElementById("hochwassermarken-bereich");
+        const markenAktuell = document.getElementById("hochwassermarken-aktuell");
+        const markenListe = document.getElementById("hochwassermarken-liste");
+
+        if (markenBereich && markenAktuell && markenListe && daten.hochwassermarken) {
+            const aktuellerPegel = Number(daten.wasserstand_cm);
+            const marken = daten.hochwassermarken;
+
+            const naechsteMarke = marken.find(m => Number(m.wasserstand_cm) > aktuellerPegel);
+
+            if (naechsteMarke) {
+                const abstand = Number(naechsteMarke.wasserstand_cm) - aktuellerPegel;
+
+                markenAktuell.innerHTML =
+                    "­ƒîè Aktueller Pegel: <strong>" + aktuellerPegel + " cm</strong><br>" +
+                    "N├ñchste Hochwassermarke: <strong>" + naechsteMarke.wasserstand_cm + " cm</strong><br>" +
+                    "<span style='opacity:.8;'>Abstand zur n├ñchsten Marke: " + abstand + " cm</span>";
+            } else {
+                markenAktuell.innerHTML =
+                    "ÔÜá´©Å Aktueller Pegel: <strong>" + aktuellerPegel + " cm</strong><br>" +
+                    "<strong>Alle hinterlegten Hochwassermarken sind erreicht.</strong>";
+            }
+
+            markenListe.innerHTML = "";
+
+            marken.forEach(marke => {
+                const wert = Number(marke.wasserstand_cm);
+                const abstand = wert - aktuellerPegel;
+                const erreicht = aktuellerPegel >= wert;
+
+                const zeile = document.createElement("div");
+                zeile.style.display = "flex";
+                zeile.style.justifyContent = "space-between";
+                zeile.style.alignItems = "center";
+                zeile.style.gap = "15px";
+                zeile.style.padding = "10px 12px";
+                zeile.style.margin = "6px 0";
+                zeile.style.borderRadius = "8px";
+                zeile.style.background = erreicht ? "#3f1d1d" : "#172554";
+                zeile.style.border = erreicht ? "1px solid #ef4444" : "1px solid #243b6b";
+
+                const info = document.createElement("div");
+                info.style.textAlign = "left";
+                info.innerHTML =
+                    "<strong>" + wert + " cm</strong><br>" +
+                    "<span style='font-size:13px;opacity:.85;'>" + marke.beschreibung + "</span>";
+
+                const status = document.createElement("div");
+                status.style.textAlign = "right";
+                status.style.whiteSpace = "nowrap";
+                status.style.fontWeight = "bold";
+
+                if (erreicht) {
+                    status.textContent = "ÔÜá´©Å erreicht";
+                } else {
+                    status.textContent = "noch " + abstand + " cm";
+                }
+
+                zeile.appendChild(info);
+                zeile.appendChild(status);
+                markenListe.appendChild(zeile);
+            });
+        }
+    } catch (error) {
+        console.error("Pegel:", error);
+        document.getElementById("pegel-wert").textContent = "Fehler";
+        document.getElementById("pegel-lage").textContent = "Daten nicht verf├╝gbar";
+}
+}
+const trendKarte = document.getElementById("pegel-trend-karte");
+if (trendKarte) {
+    trendKarte.addEventListener("click", () => {
+        const datenText = document.getElementById("pegel-trend")?.textContent || "--";
+        const pegelText = document.getElementById("pegel-wert")?.textContent || "--";
+        const zeitText = document.getElementById("pegel-zeit")?.textContent || "--";
+
+        alert(
+            "­ƒîè Pegeltrend Bad Feilnbach / Jenbach\n\n" +
+            "Trend: " + datenText + "\n" +
+            "Aktueller Pegel: " + pegelText + "\n" +
+            "Letzte Messung: " + zeitText + "\n\n" +
+            "Der Trend wird aus den aktuellen HND-Messwerten abgeleitet."
+        );
+    });
+}
+const lageKarte = document.getElementById("pegel-lage-karte");
+if (lageKarte) {
+    lageKarte.addEventListener("click", () => {
+        const lageText = document.getElementById("pegel-lage")?.textContent || "--";
+        const pegelText = document.getElementById("pegel-wert")?.textContent || "--";
+        const zeitText = document.getElementById("pegel-zeit")?.textContent || "--";
+
+        alert(
+            "­ƒîè Aktuelle Pegellage Bad Feilnbach / Jenbach\n\n" +
+            "Lage: " + lageText + "\n" +
+            "Aktueller Pegel: " + pegelText + "\n" +
+            "Letzte Messung: " + zeitText + "\n\n" +
+            "Die Gef├ñhrdungsbewertung wird sp├ñter um die offiziellen HND-Grenzwerte erg├ñnzt."
+        );
+    });
+}
+const messstelleKarte = document.getElementById("pegel-messstelle-karte");
+if (messstelleKarte) {
+    messstelleKarte.addEventListener("click", () => {
+        alert(
+            "­ƒôì Messstelle Bad Feilnbach / Jenbach\n\n" +
+            "Messstellennummer: 18284504\n" +
+            "Bezeichnung: Bad Feilnbach / Jenbach\n" +
+            "Gew├ñsser: Jenbach\n\n" +
+            "Datenquelle: Hochwassernachrichtendienst Bayern"
+        );
+    });
+}
+ladePegelAnzeige();
+function aktualisiereWebcam() {
+    const webcam = document.getElementById("pegel-webcam");
+    if (webcam) {
+        webcam.src = webcam.src.split("?")[0] + "?t=" + Date.now();
+    }
+}
+aktualisiereWebcam();
+setInterval(ladePegelAnzeige, 900000);
+setInterval(aktualisiereWebcam, 300000);
 </script>
-    <script src="/static/leaflet/leaflet.js"></script>
-<script src="/static/js/warnkarte.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
@@ -82,7 +865,7 @@ document.addEventListener("DOMContentLoaded", function () {
     messstellenMarker.bindPopup(
         "<strong>Bad Feilnbach / Jenbach</strong><br>" +
         "Messstellennummer: 18284504<br>" +
-        "Gewässer: Jenbach"
+        "Gew├ñsser: Jenbach"
     );
 
     lagekarteElement.addEventListener("click", function () {
@@ -121,7 +904,7 @@ document.addEventListener("DOMContentLoaded", function () {
             .bindPopup(
                 "<strong>Bad Feilnbach / Jenbach</strong><br>" +
                 "Messstellennummer: 18284504<br>" +
-                "Gewässer: Jenbach"
+                "Gew├ñsser: Jenbach"
             );
 
             gross.dataset.initialized = "true";
@@ -154,31 +937,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
 });
 </script>
+<script src="/static/js/app.js?v=20260809"></script>
+<script src="/static/js/warnticker.js"></script>
+<script src="/static/js/alarm.js"></script>
+<script src="/static/js/feedback.js"></script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
