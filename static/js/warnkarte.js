@@ -217,6 +217,26 @@ return {
 
         layer.on("click", function() {
 
+            // Angeclickten Landkreis an den bestehenden Wetterbereich übergeben
+            const mittelpunkt = layer.getBounds().getCenter();
+
+            console.log(
+                "WETTER-LANDKREIS GEKLICKT:",
+                landkreis,
+                mittelpunkt.lat,
+                mittelpunkt.lng
+            );
+
+            if (typeof ladeWetter === "function") {
+                ladeWetter(
+                    mittelpunkt.lat,
+                    mittelpunkt.lng,
+                    landkreis
+                );
+            } else {
+                console.error("ladeWetter ist nicht verfügbar!");
+            }
+
             const alleWarnungen = Object.values(warnungen.warnings || {})
                 .flat()
                 .concat(Object.values(warnungen.vorabInformation || {}).flat());
@@ -303,6 +323,7 @@ return {
         });
 
 });
+
 
 
 
