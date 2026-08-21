@@ -105,7 +105,7 @@ const alleWarnungen = Object.values(warnungen.warnings || {}).flat().concat(Obje
        region === normalisiereName(name) ||
        region === normalisiereName(name).replace(/^LANDKREIS\s+/, "") ||
        dwdName === normalisiereName(name).replace(/^LANDKREIS\s+/, "") ||
-       gehoertZurWarnung(w.regionName, name); }); const hatVorab = warnungenLandkreis.some(w => w.event && w.event.toUpperCase().startsWith("VORABINFORMATION"));const hatHitze = warnungenLandkreis.some(w => w.type === 8); let maxLevel = 0; warnungenLandkreis.forEach(w => { if (w.type === 0) maxLevel = Math.max(maxLevel, w.level); else if (w.type !== 8) maxLevel = Math.max(maxLevel, w.level); }); let farbe = "#8BC34A"; let opacity = 0.55; if (hatVorab) { farbe = "#FF9800"; opacity = 0.35; } else if (hatHitze) { farbe = "#C8A2FF"; opacity = 0.60; } else if (maxLevel === 2) { farbe = "#FFD600"; opacity = 0.55; } else if (maxLevel === 3) { farbe = "#FF9800"; opacity = 0.60; } else if (maxLevel === 4) { farbe = "#E53935"; opacity = 0.65; } else if (maxLevel >= 5) { farbe = "#8E24AA"; opacity = 0.70; }
+       gehoertZurWarnung(w.regionName, name); }); const hatVorab = warnungenLandkreis.some(w => w.event && w.event.toUpperCase().startsWith("VORABINFORMATION"));const hatHitze = warnungenLandkreis.some(w => w.type === 8); let maxLevel = 0; warnungenLandkreis.forEach(w => { if (w.type === 0) maxLevel = Math.max(maxLevel, Number(w.level) || 0); }); let farbe = "#8BC34A"; let opacity = 0.55; if (hatVorab) { farbe = "#FF9800"; opacity = 0.35; } else if (hatHitze) { farbe = "#C8A2FF"; opacity = 0.60; } else if (maxLevel === 2) { farbe = "#FFD600"; opacity = 0.55; } else if (maxLevel === 3) { farbe = "#FF9800"; opacity = 0.60; } else if (maxLevel === 4) { farbe = "#E53935"; opacity = 0.65; } else if (maxLevel >= 5) { farbe = "#8E24AA"; opacity = 0.70; }
 return {
             color: "#666",
             weight: 1,
@@ -323,6 +323,7 @@ return {
         });
 
 });
+
 
 
 
