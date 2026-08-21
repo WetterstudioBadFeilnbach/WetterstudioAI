@@ -52,44 +52,48 @@ def statistik(daten):
     if not daten:
         return statistik
 
-    warnings = daten.get("warnings", {})
+    # Dieselbe DWD-Datenbasis wie die öffentliche Warnkarte:
+    # normale Warnungen + Vorabinformationen
+    alle_warnungen = []
 
-    for bundesland in warnings.values():
+    for quelle in ("warnings", "vorabInformation"):
+        for kreis in daten.get(quelle, {}).values():
+            alle_warnungen.extend(kreis)
 
-        for warnung in bundesland:
+    for warnung in alle_warnungen:
 
-            statistik["gesamt"] += 1
+        statistik["gesamt"] += 1
 
-            level = warnung.get("level", 0)
+        level = warnung.get("level", 0)
 
-            if level == 2:
-                statistik["gelb"] += 1
-            elif level == 3:
-                statistik["orange"] += 1
-            elif level == 4:
-                statistik["rot"] += 1
-            elif level >= 5:
-                statistik["violett"] += 1
+        if level == 2:
+            statistik["gelb"] += 1
+        elif level == 3:
+            statistik["orange"] += 1
+        elif level == 4:
+            statistik["rot"] += 1
+        elif level >= 5:
+            statistik["violett"] += 1
 
-            ereignis = warnung.get("event", "").lower()
+        ereignis = warnung.get("event", "").lower()
 
-            if "gewitter" in ereignis:
-                statistik["gewitter"] += 1
+        if "gewitter" in ereignis:
+            statistik["gewitter"] += 1
 
-            if "sturm" in ereignis:
-                statistik["sturm"] += 1
+        if "sturm" in ereignis:
+            statistik["sturm"] += 1
 
-            if "regen" in ereignis:
-                statistik["starkregen"] += 1
+        if "regen" in ereignis:
+            statistik["starkregen"] += 1
 
-            if "hitze" in ereignis:
-                statistik["hitze"] += 1
+        if "hitze" in ereignis:
+            statistik["hitze"] += 1
 
-            if "tornado" in ereignis:
-                statistik["tornado"] += 1
+        if "tornado" in ereignis:
+            statistik["tornado"] += 1
 
-            if "schnee" in ereignis:
-                statistik["schnee"] += 1
+        if "schnee" in ereignis:
+            statistik["schnee"] += 1
 
     return statistik
 
@@ -135,3 +139,4 @@ def landkreis_warnungen(daten):
     print("vorabInformation:", len(daten.get("vorabInformation", {})))
 
     return warnungen
+
