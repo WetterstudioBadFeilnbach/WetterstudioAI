@@ -75,7 +75,7 @@ async def api_radarzellen():
 async def api_pegel():
     daten = lade_pegel()
     if daten is None:
-        return {"status": "error", "message": "Keine Pegeldaten verf├╝gbar"}
+        return {"status": "error", "message": "Keine Pegeldaten verfügbar"}
     return {"status": "ok", "daten": daten}
 # Neue Wetter-API
 @app.get("/api/wetter")
@@ -107,22 +107,22 @@ async def startseite(request: Request):
             if "tornado" in warnung["event"].lower():
                 tornado_warnungen.append(warnung)
 
-    ticker_info = "Ô£à Zurzeit liegen keine neuen Warnmeldungen vor."
+    ticker_info = "✅ Zurzeit liegen keine neuen Warnmeldungen vor."
 
     if stats["gewitter"] > 0:
         ticker_info = (
-            f"­ƒî® Neue Gewitterwarnung: Der DWD meldet aktuell "
+            f"🌩 Neue Gewitterwarnung: Der DWD meldet aktuell "
             f"{stats['gewitter']} Gewitterwarnung(en). Bitte die Wetterlage verfolgen."
         )
 
     elif stats["sturm"] > 0:
         ticker_info = (
-            f"­ƒÆ¿ Neue Sturmwarnung: Aktuell {stats['sturm']} Sturmwarnung(en) aktiv."
+            f"💨 Neue Sturmwarnung: Aktuell {stats['sturm']} Sturmwarnung(en) aktiv."
         )
 
     elif stats["starkregen"] > 0:
         ticker_info = (
-            f"­ƒîº Neue Starkregenwarnung: Der DWD warnt derzeit vor Starkregen."
+            f"🌧 Neue Starkregenwarnung: Der DWD warnt derzeit vor Starkregen."
         )
    
 
@@ -148,13 +148,13 @@ async def startseite(request: Request):
             "gewitter": stats["gewitter"],
             "tornados": stats["tornado"],
             "ort": wetter["ort"],
-            "temperatur": f'{wetter["temperatur"]} ┬░C',
+            "temperatur": f'{wetter["temperatur"]} °C',
             "wind": f'{wetter["wind"]} km/h',
             "boeen": f'{wetter["boeen"]} km/h',
             "regen": f'{wetter["regen"]} mm',
             "luftdruck": f'{wetter["luftdruck"]} hPa',
             "luftfeuchte": f'{wetter["luftfeuchte"]} %',
-            "gefuehlt": f'{wetter["gefuehlt"]} ┬░C',
+            "gefuehlt": f'{wetter["gefuehlt"]} °C',
             "weather_code": wetter["weather_code"],
             "wettertext": wetter["wettertext"],
             "daily": wetter["daily"],
