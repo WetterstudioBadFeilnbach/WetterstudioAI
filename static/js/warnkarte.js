@@ -48,18 +48,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         ],
         "Kreis Schleswig-Flensburg - Küste": [
             "Schleswig-Flensburg"
-        ],
-        "Kreis Rendsburg-Eckernförde - Binnenland": [
-            "Rendsburg-Eckernförde"
-        ],
-        "Kreis Rendsburg-Eckernförde - Küste": [
-            "Rendsburg-Eckernförde"
-        ],
-        "Kreis Dillingen a.d. Donau": [
-            "Landkreis Dillingen a.d.Donau"
-        ],
-        "Kreis Pfaffenhofen a.d. Ilm": [
-            "Landkreis Pfaffenhofen a.d.Ilm"
         ]
     };
 
@@ -80,6 +68,7 @@ console.log("Mapping:", mapping);
     console.log("DWD-Warnungen:", warnungen);
     console.log("Anzahl Gruppen:", Object.keys(warnungen.warnings).length);
 console.log(warnungen.warnings);
+console.log(Object.keys(Object.values(warnungen.warnings)[0][0]));
     // Deutschland-Landkreise laden
     fetch("/static/geojson/landkreise_neu.geojson")
         .then(r => r.json())
@@ -314,8 +303,6 @@ return {
         });
 
 });
-
-
 
 
 
