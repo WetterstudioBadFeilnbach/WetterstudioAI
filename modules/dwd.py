@@ -64,7 +64,7 @@ def statistik(daten):
 
         # Nur echte DWD-Landkreiswarnungen zählen.
         # Seewetterwarnungen ausschließen.
-        if warnung.get("type") != 0:
+        if warnung.get("type") == 1:
             continue
 
         statistik["gesamt"] += 1
@@ -144,5 +144,6 @@ def landkreis_warnungen(daten):
     print("vorabInformation:", len(daten.get("vorabInformation", {})))
 
     return warnungen
+
 
 
