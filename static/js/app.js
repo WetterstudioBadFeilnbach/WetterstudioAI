@@ -167,7 +167,7 @@ ladeWetter(
     let ausgewaehlt = -1;
     if (!karte) return;
 
-    const map = L.map("alte-karte").setView([51.2, 10.4], 6);
+    const map = L.map("deutschlandkarte").setView([51.2, 10.4], 6);
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: "&copy; OpenStreetMap"
@@ -662,4 +662,3 @@ if (balken) {
     .catch(error => console.error(error));
 
 });
-
