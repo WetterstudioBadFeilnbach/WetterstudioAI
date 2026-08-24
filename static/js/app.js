@@ -101,6 +101,8 @@ document.getElementById("wettericon").innerHTML = icon;
 }
 
 
+document.addEventListener("DOMContentLoaded", function () { ladeRadar(); setInterval(ladeRadar, 120000); });
+
 function ladeRadar() {
 
     const radar = document.getElementById("radarbild");
@@ -663,4 +665,12 @@ if (balken) {
     .catch(error => console.error(error));
 
 });
+
+
+
+
+
+
+
+
 
