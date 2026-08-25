@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     console.log("Wetterstudio Bad Feilnbach AI gestartet");
 
-    const karte = document.getElementById("deutschlandkarte");
+    const karte = document.getElementById("karte");
     const suche = document.getElementById("landkreisSuche");
     const suchErgebnisse = document.getElementById("suchErgebnisse");
 
@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (!karte) return;
 
-    const map = L.map("deutschlandkarte").setView([51.2, 10.4], 6);
+    const map = L.map("karte").setView([51.2, 10.4], 6);
 
     L.tileLayer(
         "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
