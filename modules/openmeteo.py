@@ -53,7 +53,7 @@ def wettertext(code):
         return "❔ Unbekannt"
 
 
-def aktuelle_wetterdaten(lat=47.7868, lon=12.0094):
+def aktuelle_wetterdaten(lat=48.0, lon=11.8):
 
     url = (
         "https://api.open-meteo.com/v1/forecast"
@@ -72,15 +72,10 @@ def aktuelle_wetterdaten(lat=47.7868, lon=12.0094):
 
     try:
 
-        antwort = requests.get(
-            url,
-            timeout=30,
-            headers={
-                "User-Agent": "Wetterstudio-Bad-Feilnbach-AI"
-            }
-        )
+        antwort = requests.get(url, timeout=10)
 
-        antwort.raise_for_status()
+        if antwort.status_code != 200:
+            raise Exception("Open-Meteo nicht erreichbar")
 
         daten = antwort.json()
 
@@ -90,33 +85,20 @@ def aktuelle_wetterdaten(lat=47.7868, lon=12.0094):
         code = current.get("weather_code", -1)
 
         return {
-            "ort": "Bad Feilnbach",
+            "ort": ort_ermitteln(lat, lon),
             "temperatur": round(current.get("temperature_2m", 0), 1),
-            "gefuehlt": round(
-                current.get("apparent_temperature", 0), 1
-            ),
-            "luftfeuchte": current.get(
-                "relative_humidity_2m", 0
-            ),
-            "wind": round(
-                current.get("wind_speed_10m", 0), 1
-            ),
-            "boeen": round(
-                current.get("wind_gusts_10m", 0), 1
-            ),
-            "regen": round(
-                current.get("precipitation", 0), 1
-            ),
-            "luftdruck": round(
-                current.get("surface_pressure", 0), 1
-            ),
+            "gefuehlt": round(current.get("apparent_temperature", 0), 1),
+            "luftfeuchte": current.get("relative_humidity_2m", 0),
+            "wind": round(current.get("wind_speed_10m", 0), 1),
+            "boeen": round(current.get("wind_gusts_10m", 0), 1),
+            "regen": round(current.get("precipitation", 0), 1),
+            "luftdruck": round(current.get("surface_pressure", 0), 1),
             "weather_code": code,
             "wettertext": wettertext(code),
             "daily": daily,
         }
 
-    except Exception as e:
-        print("OPENMETEO-FEHLER:", e)
+    except Exception:
 
         return {
             "ort": "--",
