@@ -1,153 +1,3 @@
-document.addEventListener("DOMContentLoaded", () => {
-
-    console.log("Wetterstudio Bad Feilnbach AI gestartet");
-
-    const karte = document.getElementById("deutschlandkarte");
-    const suche = document.getElementById("landkreisSuche");
-    const suchErgebnisse = document.getElementById("suchErgebnisse");
-
-    let ausgewaehlt = -1;
-
-    if (!karte) return;
-
-    const map = L.map("deutschlandkarte").setView([51.2, 10.4], 6);
-
-    L.tileLayer(
-        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-        {
-            attribution: "&copy; OpenStreetMap"
-        }
-    ).addTo(map);
-
-
-    // --------------------------------------------------
-    // Wetter laden
-    // --------------------------------------------------
-
-    function ladeWetter(lat, lon, landkreis) {
-
-        console.log("ladeWetter:", landkreis);
-
-        fetch(`/api/wetter?lat=${lat}&lon=${lon}&landkreis=${encodeURIComponent(landkreis)}`)
-            .then(r => r.json())
-            .then(wetter => {
-
-                document.getElementById("ort").textContent =
-                    wetter.ort;
-
-                document.getElementById("temperatur").textContent =
-                    wetter.temperatur + " °C";
-
-                document.getElementById("wettertext").textContent =
-                    wetter.wettertext;
-
-                let icon = "❔";
-
-                switch (wetter.weather_code) {
-
-                    case 0:
-                        icon = "☀️";
-                        break;
-
-                    case 1:
-                    case 2:
-                        icon = "🌤️";
-                        break;
-
-                    case 3:
-                        icon = "☁️";
-                        break;
-
-                    case 45:
-                    case 48:
-                        icon = "🌫️";
-                        break;
-
-                    case 51:
-                    case 53:
-                    case 55:
-                    case 56:
-                    case 57:
-                        icon = "🌦️";
-                        break;
-
-                    case 61:
-                    case 63:
-                    case 65:
-                    case 66:
-                    case 67:
-                        icon = "🌧️";
-                        break;
-
-                    case 71:
-                    case 73:
-                    case 75:
-                    case 77:
-                        icon = "❄️";
-                        break;
-
-                    case 80:
-                    case 81:
-                    case 82:
-                        icon = "🌦️";
-                        break;
-
-                    case 95:
-                    case 96:
-                    case 99:
-                        icon = "⛈️";
-                        break;
-                }
-
-                document.getElementById("wettericon").textContent = icon;
-                document.getElementById("wind").textContent = wetter.wind + " km/h";
-                document.getElementById("boeen").textContent = wetter.boeen + " km/h";
-                document.getElementById("regen").textContent = wetter.regen + " mm";
-                document.getElementById("luftdruck").textContent = wetter.luftdruck + " hPa";
-                document.getElementById("luftfeuchte").textContent = wetter.luftfeuchte + " %";
-                document.getElementById("gefuehlt").textContent = wetter.gefuehlt + " °C";
-
-            })
-            .catch(error => console.error(error));
-
-    }
-
-
-    // --------------------------------------------------
-    // Radar laden
-    // --------------------------------------------------
-
-    function ladeRadar() {
-
-        const radar = document.getElementById("radarbild");
-
-        if (!radar) return;
-
-        radar.src =
-            "https://www.dwd.de/DWD/wetter/radar/radfilm_brd_akt.gif?" +
-            new Date().getTime();
-
-    }
-
-
-    // --------------------------------------------------
-    // Deutschlandkarte
-    // --------------------------------------------------
-
-    Promise.all([
-        fetch("/api/warnungen").then(r => r.json()),
-        fetch("/static/geojson/landkreise.geojson").then(r => r.json())
-    ])
-
-    .then(([datenWarnungen, geojson]) => {
-
-        const warnungen = datenWarnungen;
-
-        console.log(
-            "DWD-Warnungen:",
-            JSON.stringify(warnungen, null, 2)
-        );
-
         const landkreisIndex = [];
 
         console.log("Warnungen geladen");
@@ -156,20 +6,63 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // --------------------------------------------------
         // Hilfsfunktion:
+        // Namen für den Vergleich vereinheitlichen
+        // --------------------------------------------------
+
+        function normalisiereLandkreis(name) {
+
+            if (!name) return "";
+
+            return name
+                .trim()
+                .toLowerCase()
+
+                // DWD-Bezeichnungen vereinheitlichen
+                .replace(/^kreis\s+/i, "")
+                .replace(/^landkreis\s+/i, "")
+                .replace(/^stadt\s+/i, "")
+                .replace(/^kreisfreie\s+stadt\s+/i, "")
+
+                // Leerzeichen vereinheitlichen
+                .replace(/\s+/g, " ")
+
+                // bekannte Sonderzeichen vereinheitlichen
+                .replace(/ä/g, "ae")
+                .replace(/ö/g, "oe")
+                .replace(/ü/g, "ue")
+                .replace(/ß/g, "ss")
+
+                .trim();
+        }
+
+
+        // --------------------------------------------------
         // passende Warnung für einen Landkreis suchen
         // --------------------------------------------------
 
         function findeWarnung(landkreis) {
 
-            const regionName = landkreis.trim().toLowerCase();
+            const regionName =
+                normalisiereLandkreis(landkreis);
 
-            return Object.values(warnungen)
-                .flat()
-                .find(
-                    w =>
-                        w.regionName &&
-                        w.regionName.trim().toLowerCase() === regionName
-                );
+            const alleWarnungen =
+                Object.values(warnungen).flat();
+
+            return alleWarnungen.find(w => {
+
+                if (!w.regionName) {
+                    return false;
+                }
+
+                const warnungsName =
+                    normalisiereLandkreis(
+                        w.regionName
+                    );
+
+                return warnungsName === regionName;
+
+            });
+
         }
 
 
@@ -193,7 +86,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     feature.properties.NAME ||
                     "Unbekannt";
 
-                const warnung = findeWarnung(landkreis);
+                const warnung =
+                    findeWarnung(landkreis);
 
                 let farbe = "#3ec5ff";
 
@@ -216,7 +110,9 @@ document.addEventListener("DOMContentLoaded", () => {
                         case 5:
                             farbe = "#b300ff";
                             break;
+
                     }
+
                 }
 
                 return {
@@ -236,7 +132,25 @@ document.addEventListener("DOMContentLoaded", () => {
                     feature.properties.NAME ||
                     "Unbekannt";
 
-                const warnung = findeWarnung(landkreis);
+                const warnung =
+                    findeWarnung(landkreis);
+
+
+                // --------------------------------------------------
+                // Debug-Ausgabe für Warnungen
+                // --------------------------------------------------
+
+                if (warnung) {
+
+                    console.log(
+                        "Warnung zugeordnet:",
+                        landkreis,
+                        "<-",
+                        warnung.regionName,
+                        warnung.symbol
+                    );
+
+                }
 
 
                 // --------------------------------------------------
@@ -255,38 +169,48 @@ document.addEventListener("DOMContentLoaded", () => {
                         html: `
                             <div style="
                                 font-size: 28px;
-                                line-height: 28px;
+                                line-height: 32px;
+                                width: 36px;
+                                height: 36px;
                                 text-align: center;
-                                filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                filter: drop-shadow(
+                                    0 1px 2px rgba(0,0,0,0.7)
+                                );
                             ">
                                 ${warnung.symbol}
                             </div>
                         `,
 
-                        iconSize: [32, 32],
+                        iconSize: [36, 36],
 
-                        iconAnchor: [16, 16]
+                        iconAnchor: [18, 18]
 
                     });
 
 
-                    L.marker(
+                    const marker = L.marker(
                         mitte,
                         {
                             icon: symbolIcon,
-                            interactive: true
+                            interactive: true,
+                            zIndexOffset: 1000
                         }
-                    )
+                    );
 
-                    .bindTooltip(
+
+                    marker.bindTooltip(
                         `${warnung.symbol} ${warnung.event}`,
                         {
                             direction: "top",
-                            offset: [0, -15]
+                            offset: [0, -18]
                         }
-                    )
+                    );
 
-                    .addTo(warnsymbolLayer);
+
+                    marker.addTo(warnsymbolLayer);
 
                 }
 
@@ -295,294 +219,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 // Landkreis-Tooltip
                 // --------------------------------------------------
 
-                layer.bindTooltip(landkreis, {
-                    sticky: false,
-                    permanent: false
-                });
-
-
-                // --------------------------------------------------
-                // Mouseover
-                // --------------------------------------------------
-
-                layer.on("mouseover", function () {
-
-                    this.setStyle({
-                        weight: 4,
-                        color: "#ffffff",
-                        fillColor: "#ffffff",
-                        fillOpacity: 0.35
-                    });
-
-                });
-
-
-                // --------------------------------------------------
-                // Mouseout
-                // --------------------------------------------------
-
-                layer.on("mouseout", function () {
-
-                    geojsonLayer.resetStyle(this);
-
-                });
-
-
-                // --------------------------------------------------
-                // Klick auf Landkreis
-                // --------------------------------------------------
-
-                layer.on("click", function () {
-
-                    const mitte =
-                        layer.getBounds().getCenter();
-
-                    ladeWetter(
-                        mitte.lat,
-                        mitte.lng,
-                        landkreis
-                    );
-
-                    map.fitBounds(
-                        layer.getBounds(),
-                        {
-                            padding: [20, 20]
-                        }
-                    );
-
-                    layer.openTooltip();
-
-                });
-
-
-                // --------------------------------------------------
-                // Landkreis für Suche merken
-                // --------------------------------------------------
-
-                landkreisIndex.push({
-                    name: landkreis,
-                    layer: layer
-                });
+                layer.bindTooltip(
+                    landkreis,
+                    {
+                        sticky: false,
+                        permanent: false
+                    }
+                );
 
             }
 
         });
-
-
-        // --------------------------------------------------
-        // Karte hinzufügen
-        // --------------------------------------------------
-
-        geojsonLayer.addTo(map);
-        warnsymbolLayer.addTo(map);
-
-        console.log("Deutschlandkarte eingebunden");
-        console.log("Warnsymbole eingebunden");
-
-
-        // Karte global merken
-
-        window.geojsonLayer = geojsonLayer;
-        window.warnungen = warnungen;
-        window.warnsymbolLayer = warnsymbolLayer;
-
-
-        // --------------------------------------------------
-        // Live-Suche
-        // --------------------------------------------------
-
-        if (suche) {
-
-            suche.addEventListener("input", function () {
-
-                const text =
-                    this.value.trim().toLowerCase();
-
-                suchErgebnisse.innerHTML = "";
-
-                suchErgebnisse.style.maxHeight =
-                    "320px";
-
-                suchErgebnisse.style.overflowY =
-                    "auto";
-
-                suchErgebnisse.style.display =
-                    "block";
-
-
-                const treffer =
-                    landkreisIndex.filter(
-                        eintrag =>
-                            eintrag.name
-                                .toLowerCase()
-                                .includes(text)
-                    );
-
-
-                if (text.length < 2) return;
-
-
-                if (treffer.length === 0) {
-
-                    suchErgebnisse.innerHTML =
-                        "<div style='padding:8px;color:#888;'>Kein Landkreis gefunden</div>";
-
-                    return;
-
-                }
-
-
-                if (
-                    treffer.length === 1 &&
-                    text === treffer[0].name.toLowerCase()
-                ) {
-
-                    treffer[0].layer.fire("click");
-
-                    return;
-
-                }
-
-
-                treffer
-                    .slice(0, 10)
-                    .forEach(eintrag => {
-
-                        const div =
-                            document.createElement("div");
-
-                        div.textContent =
-                            eintrag.name;
-
-                        div.style.cursor =
-                            "pointer";
-
-                        div.style.padding =
-                            "8px 10px";
-
-                        div.style.borderBottom =
-                            "1px solid #ddd";
-
-
-                        div.addEventListener(
-                            "mouseenter",
-                            () => {
-
-                                div.style.background =
-                                    "#eaf4ff";
-
-                            }
-                        );
-
-
-                        div.addEventListener(
-                            "mouseleave",
-                            () => {
-
-                                div.style.background =
-                                    "";
-
-                            }
-                        );
-
-
-                        suchErgebnisse.appendChild(div);
-
-
-                        div.addEventListener(
-                            "click",
-                            () => {
-
-                                suche.value =
-                                    eintrag.name;
-
-                                suchErgebnisse.innerHTML =
-                                    "";
-
-
-                                const mitte =
-                                    eintrag.layer
-                                        .getBounds()
-                                        .getCenter();
-
-
-                                ladeWetter(
-                                    mitte.lat,
-                                    mitte.lng,
-                                    eintrag.name
-                                );
-
-
-                                window.geojsonLayer.eachLayer(l => {
-
-                                    window.geojsonLayer
-                                        .resetStyle(l);
-
-                                });
-
-
-                                eintrag.layer.setStyle({
-
-                                    weight: 4,
-
-                                    color: "#ff9800",
-
-                                    fillColor: "#ff9800",
-
-                                    fillOpacity: 0.30
-
-                                });
-
-
-                                map.fitBounds(
-                                    eintrag.layer.getBounds(),
-                                    {
-                                        padding: [20, 20]
-                                    }
-                                );
-
-
-                                eintrag.layer.openTooltip();
-
-                                suche.blur();
-
-                                suchErgebnisse.innerHTML =
-                                    "";
-
-                            }
-                        );
-
-                    });
-
-            });
-
-        }
-
-    })
-
-
-    .catch(error => {
-
-        console.error(
-            "Fehler beim Laden der Deutschlandkarte:",
-            error
-        );
-
-    });
-
-
-    // --------------------------------------------------
-    // Start
-    // --------------------------------------------------
-
-    ladeRadar();
-
-    ladeWetter(
-        47.7868,
-        12.0094,
-        "Bad Feilnbach"
-    );
-
-    setInterval(ladeRadar, 120000);
-
-});
