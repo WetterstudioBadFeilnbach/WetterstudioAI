@@ -33,6 +33,46 @@ def lade_warnungen():
         return None
 
 
+def warnsymbol(event):
+    """
+    Ermittelt anhand des DWD-Ereignisses das passende Wettersymbol.
+    """
+
+    event = event.lower()
+
+    if "gewitter" in event:
+        return "🌩️"
+
+    if "starkregen" in event or "regen" in event:
+        return "🌧️"
+
+    if "hagel" in event:
+        return "🧊"
+
+    if "schnee" in event:
+        return "❄️"
+
+    if "glätte" in event:
+        return "⚠️"
+
+    if "sturm" in event or "orkan" in event:
+        return "💨"
+
+    if "tornado" in event:
+        return "🌪️"
+
+    if "hitze" in event:
+        return "🔥"
+
+    if "frost" in event:
+        return "🥶"
+
+    if "nebel" in event:
+        return "🌫️"
+
+    return "⚠️"
+
+
 def statistik(daten):
 
     statistik = {
@@ -124,14 +164,17 @@ def landkreis_warnungen(daten):
                 if name not in warnungen:
                     warnungen[name] = []
 
+                event = warnung.get("event", "")
+
                 warnungen[name].append({
                     "regionName": name,
                     "type": warnung.get("type", -1),
                     "level": warnung.get("level", 0),
-                    "event": warnung.get("event", ""),
+                    "event": event,
                     "headline": warnung.get("headline", ""),
+                    "symbol": warnsymbol(event),
                     "identifier": warnung.get("identifier") or (
-                        warnung.get("event", "")
+                        event
                         + "_"
                         + str(warnung.get("start"))
                         + "_"
@@ -140,10 +183,8 @@ def landkreis_warnungen(daten):
                     "start": warnung.get("start"),
                     "end": warnung.get("end"),
                 })
+
     print("warnings:", len(daten.get("warnings", {})))
     print("vorabInformation:", len(daten.get("vorabInformation", {})))
 
     return warnungen
-
-
-
