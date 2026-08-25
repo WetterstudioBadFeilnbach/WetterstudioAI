@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Wetter laden
     // --------------------------------------------------
 
-    function ladeWetter(lat, lon, landkreis) {
+    window.ladeWetter = function ladeWetter(lat, lon, landkreis) {
 
         console.log("ladeWetter:", landkreis);
 
@@ -596,3 +596,4 @@ document.addEventListener("DOMContentLoaded", () => {
     setInterval(ladeRadar, 120000);
 
 });
+

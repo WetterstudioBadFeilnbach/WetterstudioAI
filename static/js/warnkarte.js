@@ -68,7 +68,15 @@ console.log("Mapping:", mapping);
     console.log("DWD-Warnungen:", warnungen);
     console.log("Anzahl Gruppen:", Object.keys(warnungen.warnings).length);
 console.log(warnungen.warnings);
-console.log(Object.keys(Object.values(warnungen.warnings)[0][0]));
+const warnGruppen = Object.values(warnungen.warnings || {});
+const ersteWarnGruppe = warnGruppen.find(gruppe => Array.isArray(gruppe) && gruppe.length > 0);
+
+if (ersteWarnGruppe) {
+    const beispielWarnung = ersteWarnGruppe.find(() => true);
+    console.log("Beispiel-Warnung:", Object.keys(beispielWarnung));
+} else {
+    console.log("Keine normalen DWD-Warnungen vorhanden.");
+}
     // Deutschland-Landkreise laden
     fetch("/static/geojson/landkreise_neu.geojson")
         .then(r => r.json())
@@ -316,8 +324,8 @@ return {
                 mittelpunkt.lng
             );
 
-            if (typeof ladeWetter === "function") {
-                ladeWetter(
+            if (typeof window.ladeWetter === "function") {
+                window.ladeWetter(
                     mittelpunkt.lat,
                     mittelpunkt.lng,
                     landkreis
@@ -412,56 +420,4 @@ return {
         });
 
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
