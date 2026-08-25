@@ -1,4 +1,9 @@
 import requests
+import time
+
+
+_WETTER_CACHE = {}
+_CACHE_SEKUNDEN = 60
 
 
 def ort_ermitteln(lat, lon):
@@ -57,6 +62,19 @@ def wettertext(code):
 
 def aktuelle_wetterdaten(lat=48.0, lon=11.8):
 
+    cache_key = (
+        round(lat, 4),
+        round(lon, 4)
+    )
+
+    cached = _WETTER_CACHE.get(cache_key)
+
+    if cached:
+        alter = time.time() - cached["zeit"]
+
+        if alter < _CACHE_SEKUNDEN:
+            return cached["daten"]
+
     url = (
         "https://api.open-meteo.com/v1/forecast"
         f"?latitude={lat}"
@@ -91,7 +109,7 @@ def aktuelle_wetterdaten(lat=48.0, lon=11.8):
 
         code = current.get("weather_code", -1)
 
-        return {
+        ergebnis = {
             "ort": ort_ermitteln(lat, lon),
             "temperatur": round(
                 current.get("temperature_2m", 0), 1
@@ -119,6 +137,13 @@ def aktuelle_wetterdaten(lat=48.0, lon=11.8):
             "daily": daily,
         }
 
+        _WETTER_CACHE[cache_key] = {
+            "zeit": time.time(),
+            "daten": ergebnis,
+        }
+
+        return ergebnis
+
     except Exception as e:
 
         print(
@@ -126,6 +151,14 @@ def aktuelle_wetterdaten(lat=48.0, lon=11.8):
             repr(e),
             flush=True
         )
+
+        if cached:
+            print(
+                "OPENMETEO: Verwende zuletzt gespeicherte Wetterdaten.",
+                flush=True
+            )
+
+            return cached["daten"]
 
         return {
             "ort": f"FEHLER: {type(e).__name__}",
