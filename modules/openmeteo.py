@@ -14,6 +14,8 @@ def ort_ermitteln(lat, lon):
             timeout=10,
         )
 
+        antwort.raise_for_status()
+
         daten = antwort.json()
         adresse = daten.get("address", {})
 
@@ -72,12 +74,15 @@ def aktuelle_wetterdaten(lat=48.0, lon=11.8):
 
     try:
 
-        antwort = requests.get(url, timeout=10)
+        antwort = requests.get(
+            url,
+            timeout=30,
+            headers={
+                "User-Agent": "Wetterstudio-Bad-Feilnbach-AI"
+            }
+        )
 
-        if antwort.status_code != 200:
-            raise Exception(
-                f"Open-Meteo nicht erreichbar: HTTP {antwort.status_code}"
-            )
+        antwort.raise_for_status()
 
         daten = antwort.json()
 
@@ -88,7 +93,9 @@ def aktuelle_wetterdaten(lat=48.0, lon=11.8):
 
         return {
             "ort": ort_ermitteln(lat, lon),
-            "temperatur": round(current.get("temperature_2m", 0), 1),
+            "temperatur": round(
+                current.get("temperature_2m", 0), 1
+            ),
             "gefuehlt": round(
                 current.get("apparent_temperature", 0), 1
             ),
@@ -121,8 +128,8 @@ def aktuelle_wetterdaten(lat=48.0, lon=11.8):
         )
 
         return {
-            "ort": "--",
-            "temperatur": "--",
+            "ort": f"FEHLER: {type(e).__name__}",
+            "temperatur": str(e),
             "gefuehlt": "--",
             "luftfeuchte": "--",
             "wind": "--",
@@ -130,6 +137,6 @@ def aktuelle_wetterdaten(lat=48.0, lon=11.8):
             "regen": "--",
             "luftdruck": "--",
             "weather_code": -1,
-            "wettertext": "--",
+            "wettertext": repr(e),
             "daily": {},
         }
