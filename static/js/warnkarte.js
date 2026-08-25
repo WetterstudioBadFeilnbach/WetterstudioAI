@@ -331,7 +331,20 @@ return {
                     landkreis
                 );
             } else {
-                console.error("ladeWetter ist nicht verfügbar!");
+                fetch(`/api/wetter?lat=${mittelpunkt.lat}&lon=${mittelpunkt.lng}&landkreis=${encodeURIComponent(landkreis)}`)
+                    .then(r => r.json())
+                    .then(wetter => {
+                        document.getElementById("ort").textContent = wetter.ort;
+                        document.getElementById("temperatur").textContent = wetter.temperatur + " °C";
+                        document.getElementById("wettertext").textContent = wetter.wettertext;
+                        document.getElementById("wind").textContent = wetter.wind + " km/h";
+                        document.getElementById("boeen").textContent = wetter.boeen + " km/h";
+                        document.getElementById("regen").textContent = wetter.regen + " mm";
+                        document.getElementById("luftdruck").textContent = wetter.luftdruck + " hPa";
+                        document.getElementById("luftfeuchte").textContent = wetter.luftfeuchte + " %";
+                        document.getElementById("gefuehlt").textContent = wetter.gefuehlt + " °C";
+                    })
+                    .catch(error => console.error("Wetter konnte nicht geladen werden:", error));
             }
 
             const alleWarnungen = Object.values(warnungen.warnings || {})
@@ -420,4 +433,5 @@ return {
         });
 
 });
+
 
