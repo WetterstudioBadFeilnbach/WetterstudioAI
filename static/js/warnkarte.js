@@ -214,6 +214,91 @@ return {
                 path.setAttribute("stroke-width", "2");
             }, 100);
         }
+        // --------------------------------------------------
+        // DWD-Warnsymbol in der Mitte des Landkreises
+        // --------------------------------------------------
+        const alleWarnungenFuerSymbol = Object.values(warnungen.warnings || {})
+            .flat()
+            .concat(Object.values(warnungen.vorabInformation || {}).flat());
+
+        const passendeWarnungFuerSymbol = alleWarnungenFuerSymbol.find(w => {
+            const ziel = normalisiereNameGlobal(landkreis);
+            const region = normalisiereNameGlobal(w.regionName);
+
+            const dwdName = normalisiereNameGlobal(
+                mapping[w.regionName] ??
+                mapping["Landkreis " + w.regionName] ??
+                w.regionName
+            );
+
+            const kurzName = ziel.replace(/^LANDKREIS\s+/, "");
+
+            return (
+                region === ziel ||
+                region === kurzName ||
+                dwdName === ziel ||
+                dwdName === kurzName ||
+                gehoertZurWarnung(w.regionName, landkreis)
+            );
+        });
+
+        if (passendeWarnungFuerSymbol) {
+
+            let warnSymbol = "⚠️";
+
+            const eventName =
+                String(passendeWarnungFuerSymbol.event || "").toUpperCase();
+
+            if (eventName.includes("GEWITTER")) {
+                warnSymbol = "🌩️";
+            } else if (eventName.includes("STURM")) {
+                warnSymbol = "💨";
+            } else if (
+                eventName.includes("REGEN") ||
+                eventName.includes("DAUERREGEN")
+            ) {
+                warnSymbol = "🌧️";
+            } else if (eventName.includes("SCHNEE")) {
+                warnSymbol = "❄️";
+            } else if (eventName.includes("GLÄTTE")) {
+                warnSymbol = "🧊";
+            } else if (eventName.includes("NEBEL")) {
+                warnSymbol = "🌫️";
+            } else if (eventName.includes("HITZE")) {
+                warnSymbol = "🌡️";
+            }
+
+            const mittelpunkt = layer.getBounds().getCenter();
+
+            const symbolIcon = L.divIcon({
+                className: "dwd-warnsymbol",
+                html: `
+                    <div style="
+                        font-size: 30px;
+                        line-height: 30px;
+                        text-align: center;
+                        filter: drop-shadow(0 1px 2px rgba(0,0,0,0.7));
+                    ">
+                        ${warnSymbol}
+                    </div>
+                `,
+                iconSize: [36, 36],
+                iconAnchor: [18, 18]
+            });
+
+            L.marker(mittelpunkt, {
+                icon: symbolIcon,
+                interactive: false,
+                keyboard: false
+            }).addTo(karte);
+
+            console.log(
+                "WARNSYMBOL GESETZT:",
+                landkreis,
+                warnSymbol,
+                passendeWarnungFuerSymbol.event
+            );
+        }
         layer.bindTooltip(landkreis, {
             sticky: false,
             permanent: false
@@ -327,6 +412,7 @@ return {
         });
 
 });
+
 
 
 
