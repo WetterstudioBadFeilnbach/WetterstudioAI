@@ -1,7 +1,147 @@
+
+
+function ladeWetter(lat, lon, landkreis) {
+   
+console.log("ladeWetter gestartet");
+console.log("Parameter:", lat, lon, landkreis);
+   fetch(`/api/wetter?lat=${lat}&lon=${lon}&landkreis=${encodeURIComponent(landkreis)}`)
+    .then(r => r.json())
+    .then(wetter => {
+console.log("API Wetter:", wetter);
+console.log("Ort aus API:", wetter.ort);
+        document.getElementById("ort").innerHTML =
+    wetter.ort;
+
+        document.getElementById("temperatur").innerHTML =
+            wetter.temperatur + " °C";
+
+        document.getElementById("wettertext").innerHTML =
+            wetter.wettertext;
+   console.log("Weather-Code:", wetter.weather_code);         
+let icon = "❔";
+
+switch (wetter.weather_code) {
+
+    case 0:
+        icon = "☀️";
+        break;
+
+    case 1:
+    case 2:
+        icon = "🌤️";
+        break;
+
+    case 3:
+        icon = "☁️";
+        break;
+
+    case 45:
+    case 48:
+        icon = "🌫️";
+        break;
+
+    case 51:
+    case 53:
+    case 55:
+    case 56:
+    case 57:
+        icon = "🌦️";
+        break;
+
+    case 61:
+    case 63:
+    case 65:
+    case 66:
+    case 67:
+        icon = "🌧️";
+        break;
+
+    case 71:
+    case 73:
+    case 75:
+    case 77:
+        icon = "❄️";
+        break;
+
+    case 80:
+    case 81:
+    case 82:
+        icon = "🌦️";
+        break;
+
+    case 95:
+    case 96:
+    case 99:
+        icon = "⛈️";
+        break;
+
+}
+
+document.getElementById("wettericon").innerHTML = icon;
+        document.getElementById("wind").innerHTML =
+            wetter.wind + " km/h";
+
+        document.getElementById("boeen").innerHTML =
+            wetter.boeen + " km/h";
+
+        document.getElementById("regen").innerHTML =
+            wetter.regen + " mm";
+
+        document.getElementById("luftdruck").innerHTML =
+            wetter.luftdruck + " hPa";
+
+        document.getElementById("luftfeuchte").innerHTML =
+            wetter.luftfeuchte + " %";
+
+        document.getElementById("gefuehlt").innerHTML =
+            wetter.gefuehlt + " °C";
+
+    });
+
+}
+function ladeRadar() {
+
+    const radar = document.getElementById("radarbild");
+
+    if (!radar) return;
+
+    radar.src =
+        "https://www.dwd.de/DWD/wetter/radar/radfilm_brd_akt.gif?" +
+        new Date().getTime();
+
+}
+function findeWarnname(warnungen, landkreis) {
+
+    let suchname = landkreis;
+
+    if (!warnungen[suchname]) {
+
+        suchname = "Kreis " + landkreis;
+
+        if (!warnungen[suchname]) {
+            suchname = "Kreis und Stadt " + landkreis;
+        }
+
+        if (!warnungen[suchname]) {
+            suchname = "Stadt " + landkreis;
+        }
+
+        if (!warnungen[suchname]) {
+            suchname = "Landeshauptstadt " + landkreis;
+        }
+    }
+
+    return suchname;
+}
 document.addEventListener("DOMContentLoaded", () => {
 
     console.log("Wetterstudio Bad Feilnbach AI gestartet");
-
+    console.log("APP VERSION TEST 15.07");
+ladeWetter(
+    47.7868,
+    12.0094,
+    "Bad Feilnbach"
+);
     const karte = document.getElementById("deutschlandkarte");
     const suche = document.getElementById("landkreisSuche");
     const suchErgebnisse = document.getElementById("suchErgebnisse");
@@ -20,7 +160,9 @@ document.addEventListener("DOMContentLoaded", () => {
     ])
 
     .then(([datenWarnungen, geojson]) => {
-
+console.log("Promise.all erfolgreich");
+console.log("Warnungen:", datenWarnungen);
+console.log("GeoJSON Features:", geojson.features.length);
     let warnungen = datenWarnungen;
 
        const geojsonLayer = L.geoJSON(geojson, {
@@ -31,31 +173,16 @@ document.addEventListener("DOMContentLoaded", () => {
                     feature.properties.NAME_3 ||
                     feature.properties.NAME ||
                     "";
-                    let suchname = landkreis;
-
-if (!warnungen[suchname]) {
-
-    suchname = "Kreis " + landkreis;
-
-    if (!warnungen[suchname]) {
-        suchname = "Kreis und Stadt " + landkreis;
-    }
-
-    if (!warnungen[suchname]) {
-        suchname = "Stadt " + landkreis;
-    }
-
-    if (!warnungen[suchname]) {
-        suchname = "Landeshauptstadt " + landkreis;
-    }
-}
+let suchname = findeWarnname(warnungen, landkreis);
+console.log("Landkreis:", landkreis, "→", suchname, warnungen[suchname]);
 // console.log(landkreis);
+if (!warnungen[suchname]) console.log("NICHT GEFUNDEN:", landkreis, "→", suchname);
                 let farbe = "#3ec5ff";
                 let opacity = 0.08;
                            
 
                     let maxLevel = 0;
-
+console.log("maxLevel vor Auswertung:", maxLevel, "Landkreis:", landkreis);
                  if (warnungen[suchname]) {
 
     warnungen[suchname].forEach(w => {
@@ -65,6 +192,8 @@ if (!warnungen[suchname]) {
                         }
 
                     });
+console.log("Landkreis:", landkreis, "maxLevel:", maxLevel);
+
 
                     if (maxLevel == 2) {
                         farbe = "#FFD600";
@@ -104,24 +233,7 @@ if (!warnungen[suchname]) {
                     feature.properties.NAME_3 ||
                     feature.properties.NAME ||
                     "Unbekannt";
-let suchname = landkreis;
-
-if (!warnungen[suchname]) {
-
-    suchname = "Kreis " + landkreis;
-
-    if (!warnungen[suchname]) {
-        suchname = "Kreis und Stadt " + landkreis;
-    }
-
-    if (!warnungen[suchname]) {
-        suchname = "Stadt " + landkreis;
-    }
-
-    if (!warnungen[suchname]) {
-        suchname = "Landeshauptstadt " + landkreis;
-    }
-}
+let suchname = findeWarnname(warnungen, landkreis);
 layer.bindTooltip(landkreis, {
     sticky: false,
     permanent: false
@@ -147,15 +259,17 @@ layer.on("mouseout", function () {
 
                 layer.on("click", function() {
 
-                    const daten = warnungen[suchname];
-
+                  let daten = warnungen[suchname];
+if (!daten) {
+    daten = [];
+}
                     if (!daten || daten.length === 0) {
 
                         layer.bindPopup(
                             "<b>" + landkreis + "</b><br><br>✅ Keine Warnungen"
                         ).openPopup();
 
-                        return;
+                      // return;
                     }
 
                    let html =
@@ -216,23 +330,13 @@ countdown + "<br>" +
 
 const mitte = layer.getBounds().getCenter();
 
-
 console.log(mitte);
 
-fetch(`/api/wetter?lat=${mitte.lat}&lon=${mitte.lng}`)
-.then(r => r.json())
-.then(wetter => {
-document.getElementById("ort").innerHTML = landkreis;
-    document.getElementById("temperatur").innerHTML =
-        wetter.temperatur + " °C";
-
-    document.getElementById("wind").innerHTML =
-        wetter.wind + " km/h";
-
-    document.getElementById("regen").innerHTML =
-        wetter.regen + " mm";
-
-});
+ladeWetter(
+    mitte.lat,
+    mitte.lng,
+    landkreis
+);
                     layer.bindPopup(html).openPopup();
 
                 });
@@ -244,7 +348,49 @@ geojsonLayer.addTo(map);
 // ------------------------------
 // Live-Suche
 // ------------------------------
+// ------------------------------
+// DWD-Legende
+// ------------------------------
 
+const legende = L.control({ position: "bottomright" });
+
+legende.onAdd = function () {
+
+  const div = L.DomUtil.create("div");
+div.className = "dwd-legende";
+div.style.background = "#1f2937";
+div.style.color = "white";
+div.style.padding = "10px";
+div.style.border = "2px solid #ffd700";
+div.style.borderRadius = "8px";
+div.innerHTML = `
+<h4>📖 DWD-Warnstufen</h4>
+
+<div class="stufe">
+    <span class="farbe gelb"></span>
+    Wetterwarnung
+</div>
+
+<div class="stufe">
+    <span class="farbe orange"></span>
+    Markante Wetterwarnung
+</div>
+
+<div class="stufe">
+    <span class="farbe rot"></span>
+    Unwetterwarnung
+</div>
+
+<div class="stufe">
+    <span class="farbe violett"></span>
+    Extremes Unwetter
+</div>
+`;
+
+    return div;
+};
+console.log(">>> DWD-Legende wird hinzugefügt");
+legende.addTo(map);
 const layerListe = [];
 
 geojsonLayer.eachLayer(layer => {
@@ -364,32 +510,8 @@ document.addEventListener("keydown", function (e) {
 });
 
 
-const legende = L.control({ position: "bottomright" });
 
-legende.onAdd = function () {
 
-    const div = L.DomUtil.create("div", "info legend");
-
-    div.innerHTML =
-    "<div style='background:white;padding:10px;border-radius:8px;box-shadow:0 0 10px rgba(0,0,0,.3);font-size:14px;line-height:22px'>" +
-    "<b>Warnstufen</b><hr style='margin:6px 0'>" +
-    "<span style='color:#FFD600;font-weight:bold'>🟡 Gelb</span><br>" +
-    "<span style='color:#FF9800;font-weight:bold'>🟠 Orange</span><br>" +
-    "<span style='color:#E53935;font-weight:bold'>🔴 Rot</span><br>" +
-    "<span style='color:#8E24AA;font-weight:bold'>🟣 Violett</span>" +
-    "</div>";
-        "<div style='background:white;padding:10px;border-radius:8px;box-shadow:0 0 10px rgba(0,0,0,.3);font-size:14px'>" +
-        "<b>Warnstufen</b><br><br>" +
-        "🟡 Gelb<br>" +
-        "🟠 Orange<br>" +
-        "🔴 Rot<br>" +
-        "🟣 Violett" +
-        "</div>";
-
-    return div;
-};
-
-legende.addTo(map);
 setInterval(() => {
 
     fetch("/api/warnungen")
@@ -406,25 +528,27 @@ setInterval(() => {
 
         });
 
-}, 300000);
+}, 120000);
    
 // Radarbild laden
-function ladeRadar() {
 
-    const radar = document.getElementById("radarbild");
-
-    if (!radar) return;
-
-    radar.src =
-        "https://www.dwd.de/DWD/wetter/radar/radfilm_brd_akt.gif?" +
-        new Date().getTime();
-
-}
 
 ladeRadar();
 
+
+// Wetter wird vorerst über den Kartenklick geladen.
+// Startaufruf wird im nächsten Schritt korrekt eingebaut.
 // alle 5 Minuten aktualisieren
-setInterval(ladeRadar, 300000);
+setInterval(ladeRadar, 120000);
+// Fortschrittsbalken
+const balken = document.getElementById("progressBar");
+
+if (balken) {
+    const prozent = Number(balken.dataset.prozent) || 0;
+
+    balken.style.width = prozent + "%";
+    balken.textContent = prozent + " %";
+}
     })
     .catch(error => console.error(error));
 

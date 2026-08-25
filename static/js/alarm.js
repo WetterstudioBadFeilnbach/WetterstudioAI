@@ -2,17 +2,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
     console.log("🔔 Alarmmodul gestartet");
 
-    const alarm = new Audio("/static/audio/alarm.mp3");
+   const alarm = new Audio("/static/audio/gong.mp3");
+   const dwdAnsage = new Audio("/static/audio/dwd_ansage.mp3");
+   dwdAnsage.preload = "auto";
 let audioFreigegeben = false;
 
 document.addEventListener("click", () => {
     audioFreigegeben = true;
 }, { once: true });
-    const bekannteWarnungen = new Set();
+    let bekannteWarnungen = new Set();
     let ersterAufruf = true;
 
     function pruefeWarnungen() {
-
+console.count("pruefeWarnungen");
         fetch("/api/warnungen")
             .then(r => r.json())
             .then(warnungen => {
@@ -21,11 +23,17 @@ document.addEventListener("click", () => {
 
                 for (const landkreis in warnungen) {
 
-                    warnungen[landkreis].forEach(w => {
-                        if (w.identifier) {
-                            aktuelleWarnungen.add(w.identifier);
-                        }
-                    });
+                   warnungen[landkreis].forEach(w => {
+
+    const warnID =
+        landkreis + "|" +
+        w.event + "|" +
+        w.start + "|" +
+        w.end;
+
+    aktuelleWarnungen.add(warnID);
+
+});
 
                 }
 
@@ -40,10 +48,38 @@ document.addEventListener("click", () => {
                     }
                 });
 
-                console.log("Neue Warnung:", neueWarnung);
-console.log("Bekannte IDs:", [...bekannteWarnungen]);
-console.log("Aktuelle IDs:", [...aktuelleWarnungen]);
+              console.log("Neue Warnung:", neueWarnung);
+console.log("Bekannte IDs:", Array.from(bekannteWarnungen));
+console.log("Aktuelle IDs:", Array.from(aktuelleWarnungen));
+console.log("Neue IDs:", Array.from(aktuelleWarnungen).filter(id => !bekannteWarnungen.has(id)));
                 // Beim ersten Start keinen Alarm auslösen
+                // Prüfen, ob eine Tornado-/Windhosenwarnung vorhanden ist
+let tornadoWarnung = false;
+
+for (const landkreis in warnungen) {
+
+    for (const w of warnungen[landkreis]) {
+
+        const text = (
+            (w.event || "") + " " +
+            (w.headline || "") + " " +
+            (w.description || "")
+        ).toLowerCase();
+
+        if (
+            text.includes("tornado") ||
+            text.includes("windhose") ||
+            text.includes("tornad")
+        ) {
+            tornadoWarnung = true;
+            break;
+        }
+    }
+
+    if (tornadoWarnung) break;
+}
+
+
                 if (ersterAufruf) {
 
                     aktuelleWarnungen.forEach(id => {
@@ -58,32 +94,56 @@ console.log("Aktuelle IDs:", [...aktuelleWarnungen]);
                 }
 
    // Alarm nur bei wirklich neuer Warnung
-if (neueWarnung) {
+   console.log("Neue Warnung:", neueWarnung);
+console.log("Audio freigegeben:", audioFreigegeben);
 
-    if (audioFreigegeben) {
+console.log("Neue Warnung:", neueWarnung, "Audio:", audioFreigegeben);
+if (neueWarnung && audioFreigegeben && !ersterAufruf) {
+if (tornadoWarnung) {
 
-        alarm.play().then(() => {
-            console.log("✅ Alarm erfolgreich abgespielt");
-        }).catch(err => {
-            console.error("❌ Alarm konnte nicht abgespielt werden:", err);
-        });
+    console.log("🌪️ TORNADO-WARNUNG erkannt");
 
-    } else {
+    speechSynthesis.cancel();
 
-        console.log("🔇 Audio noch nicht freigegeben");
+    const tornadoAnsage = new SpeechSynthesisUtterance(
+        "Achtung. Tornado oder Windhosenwarnung des Deutschen Wetterdienstes. Bitte verfolgen Sie die aktuelle Wetterlage aufmerksam."
+    );
 
-    }
+    tornadoAnsage.lang = "de-DE";
+    tornadoAnsage.rate = 1.0;
+    tornadoAnsage.pitch = 1.0;
 
-    console.log("🔔 Neue DWD-Warnung erkannt - Alarm abgespielt");
+    speechSynthesis.speak(tornadoAnsage);
+}
+    console.log("🔔 Neue DWD-Warnung erkannt");
+
+    alarm.pause();
+    alarm.currentTime = 0;
+
+alarm.play().then(() => {
+
+console.log("✅ Alarm einmal abgespielt");
+console.log("Starte DWD-Ansage...");
+
+dwdAnsage.currentTime = 0;
+
+dwdAnsage.play().then(() => {
+    console.log("✅ DWD-Ansage erfolgreich");
+}).catch(err => {
+    console.error("❌ DWD-Ansage Fehler:", err);
+});
+   
+}).catch(err => {
+    console.error(err);
+});
 
 }
 
 // Bekannte Warnungen immer mit dem aktuellen DWD-Stand synchronisieren
-bekannteWarnungen.clear();
+// Bekannte Warnungen exakt mit dem aktuellen DWD-Stand synchronisieren
+bekannteWarnungen = new Set(aktuelleWarnungen);
 
-aktuelleWarnungen.forEach(id => {
-    bekannteWarnungen.add(id);
-});
+console.log("Bekannte Warnungen synchronisiert:", bekannteWarnungen.size);
 
             })
             .catch(err => {
@@ -102,9 +162,12 @@ const testButton = document.getElementById("alarm-test");
 if (testButton) {
 
     testButton.addEventListener("click", () => {
-
+console.log("Audio:", alarm.src);
+console.log("Ansage:", dwdAnsage.src);
         alarm.play().then(() => {
             console.log("✅ Testalarm erfolgreich abgespielt");
+            console.log("Starte DWD-Ansage...");
+dwdAnsage.play();
         }).catch(err => {
             console.error("❌ Testalarm fehlgeschlagen:", err);
         });
