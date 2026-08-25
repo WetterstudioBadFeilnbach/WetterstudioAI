@@ -1,4 +1,7 @@
 import requests
+import time
+
+_WETTER_CACHE = {}
 
 
 def ort_ermitteln(lat, lon):
@@ -55,6 +58,12 @@ def wettertext(code):
 
 def aktuelle_wetterdaten(lat=47.7868, lon=12.0094):
 
+    cache_key = (round(lat, 4), round(lon, 4))
+    cached = _WETTER_CACHE.get(cache_key)
+
+    if cached and time.time() - cached["zeit"] < 60:
+        return cached["daten"]
+
     url = (
         "https://api.open-meteo.com/v1/forecast"
         f"?latitude={lat}"
@@ -89,7 +98,7 @@ def aktuelle_wetterdaten(lat=47.7868, lon=12.0094):
 
         code = current.get("weather_code", -1)
 
-        return {
+        ergebnis = {
             "ort": "Bad Feilnbach",
             "temperatur": round(current.get("temperature_2m", 0), 1),
             "gefuehlt": round(
@@ -114,6 +123,9 @@ def aktuelle_wetterdaten(lat=47.7868, lon=12.0094):
             "wettertext": wettertext(code),
             "daily": daily,
         }
+
+        _WETTER_CACHE[cache_key] = {"zeit": time.time(), "daten": ergebnis}
+        return ergebnis
 
     except Exception as e:
         print("OPENMETEO-FEHLER:", e)
