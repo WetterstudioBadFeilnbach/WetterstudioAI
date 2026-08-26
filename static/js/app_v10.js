@@ -25,13 +25,76 @@ document.addEventListener("DOMContentLoaded", () => {
     // Wetter laden
     // --------------------------------------------------
 
+    const wetterCache = {};
+
     window.ladeWetter = function ladeWetter(lat, lon, landkreis) {
+
+        const cacheKey = `${lat.toFixed(4)}_${lon.toFixed(4)}`;
+        const jetzt = Date.now();
+
+        if (
+            wetterCache[cacheKey] &&
+            jetzt - wetterCache[cacheKey].zeit < 1800000
+        ) {
+            const wetter = wetterCache[cacheKey].daten;
+
+            document.getElementById("ort").textContent = wetter.ort;
+            document.getElementById("temperatur").textContent = wetter.temperatur + " °C";
+            document.getElementById("wettertext").textContent = wetter.wettertext;
+
+            let icon = "❔";
+
+            switch (wetter.weather_code) {
+                case 0: icon = "☀️"; break;
+                case 1:
+                case 2: icon = "🌤️"; break;
+                case 3: icon = "☁️"; break;
+                case 45:
+                case 48: icon = "🌫️"; break;
+                case 51:
+                case 53:
+                case 55:
+                case 56:
+                case 57: icon = "🌦️"; break;
+                case 61:
+                case 63:
+                case 65:
+                case 66:
+                case 67: icon = "🌧️"; break;
+                case 71:
+                case 73:
+                case 75:
+                case 77: icon = "❄️"; break;
+                case 80:
+                case 81:
+                case 82: icon = "🌦️"; break;
+                case 95:
+                case 96:
+                case 99: icon = "⛈️"; break;
+            }
+
+            document.getElementById("wettericon").textContent = icon;
+            document.getElementById("wind").textContent = wetter.wind + " km/h";
+            document.getElementById("boeen").textContent = wetter.boeen + " km/h";
+            document.getElementById("regen").textContent = wetter.regen + " mm";
+            document.getElementById("luftdruck").textContent = wetter.luftdruck + " hPa";
+            document.getElementById("luftfeuchte").textContent = wetter.luftfeuchte + " %";
+            document.getElementById("gefuehlt").textContent = wetter.gefuehlt + " °C";
+
+            console.log("Wetter aus Browser-Cache:", landkreis);
+            return;
+        }
 
         console.log("ladeWetter:", landkreis);
 
         fetch(`/api/wetter?lat=${lat}&lon=${lon}&landkreis=${encodeURIComponent(landkreis)}`)
             .then(r => r.json())
             .then(wetter => {
+
+                wetterCache[cacheKey] = {
+                    zeit: Date.now(),
+                    daten: wetter
+                };
 
                 document.getElementById("ort").textContent =
                     wetter.ort;
@@ -597,4 +660,5 @@ document.addEventListener("DOMContentLoaded", () => {
     setInterval(ladeRadar, 120000);
 
 });
+
 
