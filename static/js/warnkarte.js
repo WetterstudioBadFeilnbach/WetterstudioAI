@@ -648,54 +648,9 @@ const warnungenFuerFeature =
                                     warnSymbol =
                                         "🌡️";
                                 }
-
-                                const mittelpunkt =
-                                    layer
-                                        .getBounds()
-                                        .getCenter();
-
-                                const symbolIcon =
-                                    L.divIcon({
-
-                                        className:
-                                            "dwd-warnsymbol",
-
-                                        html:
-                                            '<div style="' +
-                                            'font-size:30px;' +
-                                            'line-height:30px;' +
-                                            'text-align:center;' +
-                                            'filter:drop-shadow(' +
-                                            '0 1px 2px ' +
-                                            'rgba(0,0,0,0.7)' +
-                                            ');' +
-                                            '">' +
-                                            warnSymbol +
-                                            '</div>',
-
-                                        iconSize:
-                                            [36, 36],
-
-                                        iconAnchor:
-                                            [18, 18]
-                                    });
-
-                                L.marker(
-                                    mittelpunkt,
-                                    {
-
-                                        icon:
-                                            symbolIcon,
-
-                                        interactive:
-                                            false,
-
-                                        keyboard:
-                                            false
-                                    }
-                                ).addTo(
-                                    karte
-                                );
+                                // Warnsymbole werden bereits von
+                                // app_v10.js über warnsymbolLayer verwaltet.
+                                // Hier keine zusätzlichen Marker erzeugen.
                             }
 
                             // ----------------------------------
