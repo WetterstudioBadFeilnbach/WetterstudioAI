@@ -352,61 +352,10 @@ document.addEventListener("DOMContentLoaded", async () => {
                     style:
                         feature => {
 
-                            let daten =
-    warnungenFuerFeature(
-        feature
-    );
-
-const featureNamen =
-    [
-        feature.properties?.DWD_NAME,
-        feature.properties?.NAME_3,
-        feature.properties?.NAME
-    ]
-    .filter(Boolean)
-    .map(
-        normalisiereName
-    );
-
-const direkteWindwarnungen =
-    alleWarnungen.filter(
-        warnung => {
-
-            const eventName =
-                String(
-                    warnung.event ||
-                    ""
-                )
-                .toUpperCase();
-
-            const istWindwarnung =
-                eventName.includes("WIND") ||
-                eventName.includes("BÖEN") ||
-                eventName.includes("STURM");
-
-            const warnRegion =
-                normalisiereName(
-                    warnung.regionName
-                );
-
-            return (
-                istWindwarnung &&
-                featureNamen.includes(
-                    warnRegion
-                )
-            );
-        }
-    );
-
-if (
-    direkteWindwarnungen.length > 0
-) {
-    daten =
-        [
-            ...daten,
-            ...direkteWindwarnungen
-        ];
-}
+                            const daten =
+                                warnungenFuerFeature(
+                                    feature
+                                );
 
                             const hatVorab =
                                 daten.some(
@@ -1058,6 +1007,5 @@ if (
         );
     }
 });
-
 
 
