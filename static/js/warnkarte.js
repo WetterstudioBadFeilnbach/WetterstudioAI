@@ -154,11 +154,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                     " "
                 )
                 .trim()
-                .toUpperCase()
-                .replace(/^KREIS\s+/, "")
-                .replace(/\s*-\s*BINNENLAND$/, "")
-                .replace(/\s*-\s*KÜSTE$/, "")
-                .trim();
+                .toUpperCase();
 
         // --------------------------------------------------
         // WARNREGION MIT LANDKREIS VERGLEICHEN
@@ -214,20 +210,13 @@ document.addEventListener("DOMContentLoaded", async () => {
                 sonderGebiete[regionName]
             ) {
 
-                const istSondergebiet =
-                    sonderGebiete[
-                        regionName
-                    ].some(
-                        name =>
-                            normalisiereName(name) ===
-                            landkreis
-                    );
-
-                if (
-                    istSondergebiet
-                ) {
-                    return true;
-                }
+                return sonderGebiete[
+                    regionName
+                ].some(
+                    name =>
+                        normalisiereName(name) ===
+                        landkreis
+                );
             }
 
             // Landkreisname innerhalb der Warnregion prüfen
@@ -542,11 +531,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                                         warnung.event ||
                                         ""
                                     )
-                                        .toUpperCase()
-                .replace(/^KREIS\s+/, "")
-                .replace(/\s*-\s*BINNENLAND$/, "")
-                .replace(/\s*-\s*KÜSTE$/, "")
-                .trim();
+                                        .toUpperCase();
 
                                 if (
                                     eventName.includes(
@@ -1007,5 +992,3 @@ document.addEventListener("DOMContentLoaded", async () => {
         );
     }
 });
-
-
