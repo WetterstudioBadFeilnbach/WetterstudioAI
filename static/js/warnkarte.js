@@ -219,6 +219,14 @@ document.addEventListener("DOMContentLoaded", async () => {
                 );
             }
 
+            // Landkreisname innerhalb der Warnregion prüfen
+            if (
+                region.includes(landkreis) ||
+                landkreis.includes(region)
+            ) {
+                return true;
+            }
+
             return false;
         };
 
