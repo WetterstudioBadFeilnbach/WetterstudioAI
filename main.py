@@ -1,7 +1,8 @@
-from fastapi import FastAPI, Request, Query, Body
+from fastapi import FastAPI, Request, Query, Body, HTTPException, Depends
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from modules.dwd import (
     lade_warnungen,
@@ -20,10 +21,19 @@ from modules.pegel import lade_pegel
 from config import VERSION, FEATURES
 
 from datetime import datetime
+from pathlib import Path
 import csv
+import secrets
 
 
 app = FastAPI(title="Wetterstudio Bad Feilnbach AI")
+
+
+# Passwortschutz für den privaten Admin-Bereich
+security = HTTPBasic()
+
+ADMIN_BENUTZER = "admin"
+ADMIN_PASSWORT = "@@@MarkusMichels!23tpEG25"
 
 
 # Statische Dateien
@@ -78,7 +88,6 @@ async def api_radolanstatus():
 async def api_radarzellen():
 
     from modules.test_tracking import TESTMODUS, test_zellen
-    from pathlib import Path
     import json
 
     datei = Path("static/data/radarzellen.json")
@@ -299,6 +308,7 @@ async def startseite(request: Request):
     )
 
 
+# Feedback speichern
 @app.post("/api/feedback")
 async def feedback(data: dict = Body(...)):
 
@@ -333,3 +343,193 @@ async def feedback(data: dict = Body(...)):
     return {
         "status": "ok"
     }
+
+
+# Privater Feedback-Bereich
+@app.get("/admin/feedback", response_class=HTMLResponse)
+async def admin_feedback(
+    credentials: HTTPBasicCredentials = Depends(security)
+):
+
+    benutzer_ok = secrets.compare_digest(
+        credentials.username,
+        ADMIN_BENUTZER
+    )
+
+    passwort_ok = secrets.compare_digest(
+        credentials.password,
+        ADMIN_PASSWORT
+    )
+
+    if not (
+        benutzer_ok
+        and passwort_ok
+    ):
+        raise HTTPException(
+            status_code=401,
+            detail="Zugriff verweigert",
+            headers={
+                "WWW-Authenticate": "Basic"
+            }
+        )
+
+
+    feedbacks = []
+
+    datei = Path("feedback.csv")
+
+    if datei.exists():
+
+        with open(
+            datei,
+            "r",
+            encoding="utf-8",
+            newline=""
+        ) as f:
+
+            reader = csv.reader(f)
+
+            for zeile in reader:
+
+                if len(zeile) >= 3:
+
+                    feedbacks.append({
+                        "datum": zeile[0],
+                        "name": zeile[1],
+                        "feedback": zeile[2]
+                    })
+
+
+    feedbacks.reverse()
+
+
+    html = """
+    <!DOCTYPE html>
+    <html lang="de">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport"
+              content="width=device-width, initial-scale=1">
+
+        <title>Beta-Feedback – Wetterstudio Bad Feilnbach AI</title>
+
+        <style>
+
+            body {
+                font-family: Arial, sans-serif;
+                margin: 0;
+                padding: 30px;
+                background: #f4f6f8;
+            }
+
+            h1 {
+                margin-top: 0;
+            }
+
+            .feedback {
+                background: white;
+                padding: 20px;
+                margin-bottom: 15px;
+                border-radius: 10px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            }
+
+            .datum {
+                color: #666;
+                font-size: 14px;
+            }
+
+            .name {
+                font-weight: bold;
+                margin-top: 8px;
+            }
+
+            .text {
+                margin-top: 10px;
+                white-space: pre-wrap;
+            }
+
+            .leer {
+                background: white;
+                padding: 20px;
+                border-radius: 10px;
+            }
+
+        </style>
+
+    </head>
+
+    <body>
+
+        <h1>🔒 Beta-Feedback</h1>
+
+        <p>
+            Wetterstudio Bad Feilnbach AI –
+            interner Bereich
+        </p>
+    """
+
+
+    if not feedbacks:
+
+        html += """
+        <div class="leer">
+            Noch kein Feedback vorhanden.
+        </div>
+        """
+
+    else:
+
+        for eintrag in feedbacks:
+
+            datum = (
+                eintrag["datum"]
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+            )
+
+            name = (
+                eintrag["name"]
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+            )
+
+            text = (
+                eintrag["feedback"]
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+            )
+
+            html += f"""
+
+            <div class="feedback">
+
+                <div class="datum">
+                    {datum}
+                </div>
+
+                <div class="name">
+                    {name}
+                </div>
+
+                <div class="text">
+                    {text}
+                </div>
+
+            </div>
+            """
+
+
+    html += """
+
+    </body>
+    </html>
+    """
+
+
+    return HTMLResponse(
+        content=html
+    )
