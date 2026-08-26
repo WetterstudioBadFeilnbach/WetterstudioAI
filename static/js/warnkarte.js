@@ -248,85 +248,76 @@ document.addEventListener("DOMContentLoaded", async () => {
         );
 
         // --------------------------------------------------
-//
-// WARNUNGEN FÜR GEOJSON-FEATURE FINDEN
-//
-// Es werden mehrere mögliche Namen geprüft.
-// Zusätzlich werden unterschiedliche Schreibweisen
-// von Kreis-, Stadt- und Landkreisnamen normalisiert.
-//
-// --------------------------------------------------
+        //
+        // WARNUNGEN FÜR GEOJSON-FEATURE FINDEN
+        //
+        // Es werden nur die tatsächlichen Landkreisnamen
+        // geprüft. Andere GeoJSON-Eigenschaften werden
+        // bewusst nicht für die Warnzuordnung verwendet.
+        //
+        // --------------------------------------------------
 
-const warnungenFuerFeature =
-    feature => {
+        const warnungenFuerFeature =
+            feature => {
 
-        const properties =
-            feature.properties || {};
+                const properties =
+                    feature.properties || {};
 
-        const normalisiereName =
-            value =>
-                String(value || "")
-                    .toLowerCase()
-                    .replace(/ä/g, "ae")
-                    .replace(/ö/g, "oe")
-                    .replace(/ü/g, "ue")
-                    .replace(/ß/g, "ss")
-                    .replace(/[^\w\s]/g, " ")
-                    .replace(
-                        /\b(kreisfreie stadt|landkreis|kreis|stadt|binnenland|küste|kueste)\b/g,
-                        " "
-                    )
-                    .replace(/\s+/g, " ")
-                    .trim();
+                const normalisiereFeatureName =
+                    value =>
+                        String(value || "")
+                            .toLowerCase()
+                            .replace(/ä/g, "ae")
+                            .replace(/ö/g, "oe")
+                            .replace(/ü/g, "ue")
+                            .replace(/ß/g, "ss")
+                            .replace(/[^\w\s]/g, " ")
+                            .replace(
+                                /\b(kreisfreie stadt|landkreis|kreis|stadt|binnenland|küste|kueste)\b/g,
+                                " "
+                            )
+                            .replace(/\s+/g, " ")
+                            .trim();
 
-        const moeglicheNamen = [
-            properties.DWD_NAME,
-            properties.NAME_3,
-            properties.NAME,
-            ...Object.values(properties)
-        ]
-            .filter(
-                value =>
-                    typeof value === "string" &&
-                    value.trim() !== ""
-            );
-
-        return alleWarnungen.filter(
-            warnung => {
-
-                const warnName =
-                    normalisiereName(
-                        warnung.regionName
+                const moeglicheNamen = [
+                    properties.DWD_NAME,
+                    properties.NAME_3,
+                    properties.NAME
+                ]
+                    .filter(
+                        value =>
+                            typeof value === "string" &&
+                            value.trim() !== ""
                     );
 
-                return moeglicheNamen.some(
-                    landkreisName => {
+                return alleWarnungen.filter(
+                    warnung => {
 
-                        const featureName =
-                            normalisiereName(
-                                landkreisName
+                        const warnName =
+                            normalisiereFeatureName(
+                                warnung.regionName
                             );
 
-                        return (
-                            gehoertZurWarnung(
-                                warnung.regionName,
-                                landkreisName
-                            ) ||
-                            warnName === featureName ||
-                            (
-                                warnName.length > 3 &&
-                                featureName.length > 3 &&
-                                (
-                                    warnName.includes(featureName) ||
-                                    featureName.includes(warnName)
-                                )
-                            )
+                        return moeglicheNamen.some(
+                            landkreisName => {
+
+                                const featureName =
+                                    normalisiereFeatureName(
+                                        landkreisName
+                                    );
+
+                                return (
+                                    gehoertZurWarnung(
+                                        warnung.regionName,
+                                        landkreisName
+                                    ) ||
+                                    warnName === featureName
+                                );
+                            }
                         );
                     }
                 );
-            }
-        );
-    };
+            };
 
         // --------------------------------------------------
         // DEUTSCHLAND-LANDKREISE LADEN
@@ -648,6 +639,7 @@ const warnungenFuerFeature =
                                     warnSymbol =
                                         "🌡️";
                                 }
+
                                 // Warnsymbole werden bereits von
                                 // app_v10.js über warnsymbolLayer verwaltet.
                                 // Hier keine zusätzlichen Marker erzeugen.
