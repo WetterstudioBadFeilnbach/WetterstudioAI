@@ -1,13 +1,14 @@
 document.addEventListener("DOMContentLoaded", async () => {
 
-    // Karte erzeugen
-    const karte = L.map("karte").setView([51.0, 10.3], 4);
+    // Karte im neutralen DWD-ähnlichen Übersichts-Stil
+    const karte = L.map("karte", {
+        zoomControl: true,
+        attributionControl: false,
+        preferCanvas: false
+    }).setView([51.0, 10.3], 5);
 
-    // OpenStreetMap
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "&copy; OpenStreetMap"
-    }).addTo(karte);
-
+    // Neutraler Hintergrund statt Straßenkarte
+    document.getElementById("karte").style.background = "#d7e3ec";
     const vorabPattern = '<defs><pattern id="vorabSchraffur" patternUnits="userSpaceOnUse" width="8" height="8"><rect width="8" height="8" fill="#FF9800" fill-opacity="0.20"/><line x1="0" y1="0" x2="0" y2="8" stroke="#FF9800" stroke-width="5" stroke-opacity="1"/></pattern></defs>';
     // DWD-Warnungen laden
     const svgRenderer = L.svg();
@@ -154,8 +155,8 @@ if (ersteWarnGruppe) {
             opacity = 0.70;
         }
 return {
-            color: "#666",
-            weight: 1,
+            color: "#ffffff",
+            weight: 0.35,
             fillColor: hatVorab ? "url(#vorabSchraffur)" : farbe,
             fillOpacity: hatVorab ? 0.35 : opacity
         };
@@ -468,4 +469,8 @@ return {
         });
 
 });
+
+
+
+
 
