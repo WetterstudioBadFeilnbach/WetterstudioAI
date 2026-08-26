@@ -156,6 +156,10 @@ def landkreis_warnungen(daten):
 
             for warnung in kreis:
 
+                # Seewetterwarnungen ausschließen.
+                if warnung.get("type") == 1:
+                    continue
+
                 name = warnung.get("regionName")
 
                 if not name:
@@ -188,3 +192,4 @@ def landkreis_warnungen(daten):
     print("vorabInformation:", len(daten.get("vorabInformation", {})))
 
     return warnungen
+
