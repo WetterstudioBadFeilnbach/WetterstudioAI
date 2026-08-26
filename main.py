@@ -43,12 +43,6 @@ app.mount(
     name="static"
 )
 
-app.mount(
-    "/data",
-    StaticFiles(directory="data"),
-    name="data"
-)
-
 
 # HTML-Templates
 templates = Jinja2Templates(directory="templates")
@@ -152,14 +146,6 @@ async def api_wetter(
     return wetter
 
 
-
-@app.get("/test-wetterdaten")
-async def test_wetterdaten(request: Request):
-    return templates.TemplateResponse(
-        request=request,
-        name="test_wetterdaten.html",
-        context={}
-    )
 print(">>> STARTSEITE WIRD AUS MAIN.PY GELADEN <<<")
 
 
@@ -547,38 +533,3 @@ async def admin_feedback(
     return HTMLResponse(
         content=html
     )
-# Wetterkarten-Testseite
-@app.get("/wetterkarten-test")
-async def wetterkarten_test(request: Request):
-
-    return templates.TemplateResponse(
-        request=request,
-        name="wetterkarten_test.html",
-        context={
-            "titel": "Wetterkarten-Test – Wetterstudio Bad Feilnbach AI"
-        }
-    )
-
-from modules.bayern_karte import (
-    erstelle_bayern_karte
-)
-
-
-@app.post("/api/wetterkarte/bayern")
-async def erstelle_bayern_wetterkarte():
-
-    dateipfad = (
-        erstelle_bayern_karte()
-    )
-
-    return {
-        "status": "ok",
-        "dateipfad": "/" + dateipfad.replace(
-            "\\",
-            "/"
-        )
-    }
-
-
-
-
