@@ -205,7 +205,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 const warnung = findeWarnung(landkreis);
 
-                let farbe = "#3ec5ff";
+                let farbe = "#7cbf5b";
 
                 if (warnung) {
 
@@ -596,4 +596,5 @@ document.addEventListener("DOMContentLoaded", () => {
     setInterval(ladeRadar, 120000);
 
 });
+
 
