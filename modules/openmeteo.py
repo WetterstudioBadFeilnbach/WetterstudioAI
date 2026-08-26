@@ -107,15 +107,21 @@ def aktuelle_wetterdaten(lat=48.0, lon=11.8):
         )
 
         if antwort.status_code == 429:
+            print(
+                "OPENMETEO-FEHLER: HTTP 429 Too Many Requests - Pause für 30 Minuten",
+                flush=True
+            )
+
+            _NAECHSTER_OPENMETEO_VERSUCH = (
+                time.time() + 1800
+            )
 
             print(
                 "OPENMETEO-FEHLER: HTTP 429 Too Many Requests",
                 flush=True
             )
 
-            _NAECHSTER_OPENMETEO_VERSUCH = (
-                time.time() + 300
-            )
+            # 429-Sperre läuft bereits 30 Minuten
 
             if cached:
                 return cached["daten"]
@@ -244,4 +250,5 @@ def aktuelle_wetterdaten(lat=48.0, lon=11.8):
             "wettertext": "Wetterdaten vorübergehend nicht verfügbar",
             "daily": {},
         }
+
 
