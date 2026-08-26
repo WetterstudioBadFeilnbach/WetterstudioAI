@@ -90,6 +90,12 @@ def aktuelle_wetterdaten(lat=48.0, lon=11.8):
         "&timezone=Europe%2FBerlin"
     )
 
+    print(
+        "OPENMETEO-TEST: Anfrage wird gestartet:",
+        url,
+        flush=True
+    )
+
     try:
 
         antwort = requests.get(
@@ -238,3 +244,4 @@ def aktuelle_wetterdaten(lat=48.0, lon=11.8):
             "wettertext": "Wetterdaten vorübergehend nicht verfügbar",
             "daily": {},
         }
+
