@@ -11,6 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!karte) return;
 
     const map = L.map("karte").setView([51.2, 10.4], 6);
+    window.wetterstudioMap = map;
 
     L.tileLayer(
         "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -596,5 +597,4 @@ document.addEventListener("DOMContentLoaded", () => {
     setInterval(ladeRadar, 120000);
 
 });
-
 

@@ -4,11 +4,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     // KARTE
     // --------------------------------------------------
 
-    const karte = L.map("karte", {
-        zoomControl: true,
-        attributionControl: false,
-        preferCanvas: false
-    }).setView([51.0, 10.3], 5);
+    const karte = window.wetterstudioMap;
+
+    if (!karte) {
+        console.error(
+            "WARNKARTE-FEHLER: Die Hauptkarte wurde nicht gefunden."
+        );
+        return;
+    }
 
     document.getElementById("karte").style.background =
         "#d7e3ec";
@@ -373,6 +376,14 @@ const warnungenFuerFeature =
                                     feature
                                 );
 
+                            if (daten.length > 0) {
+                                console.log(
+                                    "WARNUNGS-MATCH:",
+                                    feature.properties.DWD_NAME,
+                                    daten
+                                );
+                            }
+
                             const hatVorab =
                                 daten.some(
                                     w =>
@@ -526,6 +537,14 @@ const warnungenFuerFeature =
                                 warnungenFuerFeature(
                                     feature
                                 );
+
+                            if (daten.length > 0) {
+                                console.log(
+                                    "WARNUNGS-MATCH:",
+                                    feature.properties.DWD_NAME,
+                                    daten
+                                );
+                            }
 
                             // ----------------------------------
                             // TOOLTIP
@@ -1019,6 +1038,3 @@ const warnungenFuerFeature =
         );
     }
 });
-
-
-
