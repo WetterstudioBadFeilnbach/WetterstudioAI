@@ -276,7 +276,7 @@ const warnungenFuerFeature =
                     .replace(/ß/g, "ss")
                     .replace(/[^\w\s]/g, " ")
                     .replace(
-                        /\b(kreisfreie stadt|landkreis|kreis|stadt)\b/g,
+                        /\b(kreisfreie stadt|landkreis|kreis|stadt|binnenland|küste|kueste)\b/g,
                         " "
                     )
                     .replace(/\s+/g, " ")
@@ -1025,4 +1025,5 @@ const warnungenFuerFeature =
         );
     }
 });
+
 
