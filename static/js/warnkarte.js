@@ -1,499 +1,476 @@
 document.addEventListener("DOMContentLoaded", async () => {
 
-    // --------------------------------------------------
-    // KARTE
-    // --------------------------------------------------
-
+    // Karte im neutralen DWD-ähnlichen Übersichts-Stil
     const karte = L.map("karte", {
         zoomControl: true,
-        attributionControl: false
+        attributionControl: false,
+        preferCanvas: false
     }).setView([51.0, 10.3], 5);
 
+    // Neutraler Hintergrund statt Straßenkarte
     document.getElementById("karte").style.background = "#d7e3ec";
-
-
-    // --------------------------------------------------
-    // DWD-WARNUNGEN LADEN
-    // --------------------------------------------------
-
+    const vorabPattern = '<defs><pattern id="vorabSchraffur" patternUnits="userSpaceOnUse" width="8" height="8"><rect width="8" height="8" fill="#FF9800" fill-opacity="0.20"/><line x1="0" y1="0" x2="0" y2="8" stroke="#FF9800" stroke-width="5" stroke-opacity="1"/></pattern></defs>';
+    // DWD-Warnungen laden
+    const svgRenderer = L.svg();
+    svgRenderer.addTo(karte);
+    const svgRoot = svgRenderer._container;
+    if (svgRoot && !svgRoot.querySelector("#vorabSchraffur")) {
+        svgRoot.insertAdjacentHTML("afterbegin", vorabPattern);
+    }
     const antwort = await fetch("/api/dwd-warnungen");
     const warnungen = await antwort.json();
-
     const mappingAntwort = await fetch("/static/mapping.json");
     const mapping = await mappingAntwort.json();
-
-
-    // --------------------------------------------------
-    // SONDERGEBIETE
-    // --------------------------------------------------
-
     const sonderGebiete = {
         "Kreis und Stadt München": [
             "Stadt München",
             "Landkreis München"
         ],
-
         "Kreis und Stadt Augsburg": [
             "Stadt Augsburg",
             "Landkreis Augsburg"
         ],
-
         "Kreis und Stadt Rosenheim": [
             "Stadt Rosenheim",
             "Landkreis Rosenheim"
         ],
-
         "Alb-Donau-Kreis und Stadt Ulm": [
             "Landkreis Alb-Donau-Kreis",
             "Ulm"
         ],
-
         "Kreis Nordfriesland - Binnenland": [
             "Landkreis Nordfriesland"
         ],
-
         "Kreis Nordfriesland - Küste": [
             "Landkreis Nordfriesland"
         ],
-
         "Kreis Schleswig-Flensburg - Binnenland": [
             "Schleswig-Flensburg"
         ],
-
         "Kreis Schleswig-Flensburg - Küste": [
             "Schleswig-Flensburg"
         ]
     };
 
+    const gehoertZurWarnung = (regionName, landkreisName) => {
+        if (regionName === landkreisName) return true;
 
-    // --------------------------------------------------
-    // NAMEN EINHEITLICH NORMALISIEREN
-    // --------------------------------------------------
+        if (sonderGebiete[regionName]) {
+            return sonderGebiete[regionName].includes(landkreisName);
+        }
 
-    const normalisiereName = n =>
-        String(n || "")
+        return false;
+    };
+    const normalisiereNameGlobal = n => String(n || "").replace(/^(Landkreis|Kreis|Stadt|LK)\s+/i, "").replace(/\s+/g, " ").trim().toUpperCase();
+    console.log("VORAB-ROHDATEN:", warnungen.vorabInformation);
+    console.log("VORAB-ROSENHEIM:", Object.values(warnungen.vorabInformation || {}).flat().filter(w => w.regionName && w.regionName.includes("Rosenheim")));
+
+console.log("Mapping:", mapping);
+    console.log("DWD-Warnungen:", warnungen);
+    console.log("Anzahl Gruppen:", Object.keys(warnungen.warnings).length);
+console.log(warnungen.warnings);
+const warnGruppen = Object.values(warnungen.warnings || {});
+const ersteWarnGruppe = warnGruppen.find(gruppe => Array.isArray(gruppe) && gruppe.length > 0);
+
+if (ersteWarnGruppe) {
+    const beispielWarnung = ersteWarnGruppe.find(() => true);
+    console.log("Beispiel-Warnung:", Object.keys(beispielWarnung));
+} else {
+    console.log("Keine normalen DWD-Warnungen vorhanden.");
+}
+    // Deutschland-Landkreise laden
+    fetch("/static/geojson/landkreise_neu.geojson")
+        .then(r => r.json())
+        .then(data => {
+
+          // Karte automatisch exakt an die Deutschland-Landkreise anpassen
+          const deutschlandGrenzen = L.geoJSON(data).getBounds();
+          karte.fitBounds(deutschlandGrenzen, { padding: [10, 10] });
+
+          L.geoJSON(data, {
+            renderer: svgRenderer,
+
+    style: function(feature) {
+
+        const name = feature.properties.DWD_NAME;
+
+        const alleWarnungen = Object.values(warnungen.warnings || {}).flat()
+            .concat(Object.values(warnungen.vorabInformation || {}).flat());
+
+        const normalisiereName = n => String(n || "")
             .replace(/^(Landkreis|Kreis|Stadt|LK)\s+/i, "")
             .replace(/\s+/g, " ")
             .trim()
             .toUpperCase();
 
+        const warnungenLandkreis = alleWarnungen.filter(w => {
+            const ziel = normalisiereName(name);
+            const region = normalisiereName(w.regionName);
+            const dwdName = normalisiereName(
+                mapping[w.regionName] ??
+                mapping["Landkreis " + w.regionName] ??
+                w.regionName
+            );
 
-    // --------------------------------------------------
-    // PRÜFEN, OB DWD-WARNUNG ZUM LANDKREIS GEHÖRT
-    // --------------------------------------------------
+            return region === ziel ||
+                   dwdName === ziel ||
+                   gehoertZurWarnung(w.regionName, name);
+        });
 
-    const gehoertZurWarnung = (regionName, landkreisName) => {
+        const hatVorab = warnungenLandkreis.some(w =>
+            w.event &&
+            w.event.toUpperCase().startsWith("VORABINFORMATION")
+        );
 
-        const region = normalisiereName(regionName);
-        const landkreis = normalisiereName(landkreisName);
+        const hatHitze = warnungenLandkreis.some(w => w.type === 8);
 
-        // Direkter Treffer
-        if (region === landkreis) {
-            return true;
-        }
+        let maxLevel = 0;
 
-        // Mapping direkt prüfen
-        const mapped =
-            mapping[regionName] ??
-            mapping["Landkreis " + regionName] ??
-            null;
-
-        if (
-            mapped &&
-            normalisiereName(mapped) === landkreis
-        ) {
-            return true;
-        }
-
-        // Mapping auch mit normalisierten Namen durchsuchen
-        const mappingTreffer = Object.entries(mapping).some(
-            ([dwdRegion, geoName]) => {
-
-                return (
-                    normalisiereName(dwdRegion) === region &&
-                    normalisiereName(geoName) === landkreis
-                );
+        warnungenLandkreis.forEach(w => {
+            if (w.type !== 8) {
+                maxLevel = Math.max(maxLevel, w.level);
             }
-        );
+        });
 
-        if (mappingTreffer) {
-            return true;
+        let farbe = "#8BC34A";
+        let opacity = 0.55;
+
+        if (hatVorab) {
+            farbe = "#FF9800";
+            opacity = 0.35;
+        } else if (hatHitze) {
+            farbe = "#C8A2FF";
+            opacity = 0.60;
+        } else if (maxLevel === 2) {
+            farbe = "#FFD600";
+            opacity = 0.55;
+        } else if (maxLevel === 3) {
+            farbe = "#FF9800";
+            opacity = 0.60;
+        } else if (maxLevel === 4) {
+            farbe = "#E53935";
+            opacity = 0.65;
+        } else if (maxLevel >= 5) {
+            farbe = "#8E24AA";
+            opacity = 0.70;
         }
+return {
+            color: "#ffffff",
+            weight: 0.35,
+            fillColor: hatVorab ? "url(#vorabSchraffur)" : farbe,
+            fillOpacity: hatVorab ? 0.35 : opacity
+        };
 
-        // Sondergebiete ebenfalls normalisiert prüfen
-        const sonderGebiet = Object.entries(sonderGebiete).find(
-            ([gebietName]) =>
-                normalisiereName(gebietName) === region
-        );
+    },
 
-        if (sonderGebiet) {
+    onEachFeature: function(feature, layer) {
 
-            return sonderGebiet[1].some(
-                gebietLandkreis =>
-                    normalisiereName(gebietLandkreis) === landkreis
+        const landkreis =
+            feature.properties.DWD_NAME ||
+            feature.properties.NAME_3 ||
+            feature.properties.NAME ||
+            "Unbekannt";
+
+        const suchname =
+            mapping[landkreis] ||
+            landkreis;
+
+        const zielName = normalisiereNameGlobal(landkreis);
+        const hatVorabLayer = Object.values(warnungen.vorabInformation || {}).flat().some(w => {
+            const region = normalisiereNameGlobal(w.regionName);
+            const dwdName = normalisiereNameGlobal(
+                mapping[w.regionName] ??
+                mapping["Landkreis " + w.regionName] ??
+                w.regionName
             );
-        }
-
-        return false;
-    };
-
-
-    // --------------------------------------------------
-    // ALLE WARNUNGEN ZUSAMMENFÜHREN
-    // --------------------------------------------------
-
-    const alleWarnungen = [
-        ...Object.values(warnungen.warnings || {}).flat(),
-        ...Object.values(warnungen.vorabInformation || {}).flat()
-    ];
-
-    console.log(
-        "DWD-WARNUNGEN GELADEN:",
-        alleWarnungen
-    );
-
-
-    // --------------------------------------------------
-    // WARNUNGEN FÜR EINEN LANDKREIS
-    // --------------------------------------------------
-
-    const warnungenFuerLandkreis = landkreisName => {
-
-        const treffer = alleWarnungen.filter(w =>
-            gehoertZurWarnung(
-                w.regionName,
-                landkreisName
-            )
-        );
-
-        return treffer;
-    };
-
-
-    // --------------------------------------------------
-    // GEOJSON LADEN UND KARTE ERSTELLEN
-    // --------------------------------------------------
-
-    fetch("/static/geojson/landkreise_neu.geojson")
-
-        .then(r => {
-
-            if (!r.ok) {
-                throw new Error(
-                    "GeoJSON konnte nicht geladen werden: " +
-                    r.status
-                );
-            }
-
-            return r.json();
-        })
-
-        .then(data => {
-
-            const deutschlandGrenzen =
-                L.geoJSON(data).getBounds();
-
-            karte.fitBounds(
-                deutschlandGrenzen,
-                {
-                    padding: [15, 15]
-                }
-            );
-
-
-            // --------------------------------------------------
-            // LANDKREISE ZEICHNEN
-            // --------------------------------------------------
-
-            const warnLayer = L.geoJSON(data, {
-
-                style: feature => {
-
-                    const landkreis =
-                        feature.properties.DWD_NAME ||
-                        feature.properties.NAME_3 ||
-                        feature.properties.NAME ||
-                        "";
-
-                    const daten =
-                        warnungenFuerLandkreis(
-                            landkreis
-                        );
-
-
-                    // --------------------------------------------------
-                    // WARNUNGSTYPEN
-                    // --------------------------------------------------
-
-                    const hatVorab = daten.some(w =>
-                        String(w.event || "")
-                            .toUpperCase()
-                            .startsWith(
-                                "VORABINFORMATION"
-                            )
-                    );
-
-                    const hatHitze = daten.some(w =>
-                        Number(w.type) === 8
-                    );
-
-
-                    let maxLevel = 0;
-
-                    daten.forEach(w => {
-
-                        if (
-                            Number(w.type) !== 8
-                        ) {
-
-                            maxLevel = Math.max(
-                                maxLevel,
-                                Number(w.level) || 0
-                            );
-                        }
-                    );
-
-
-                    // --------------------------------------------------
-                    // STANDARD: KEINE WARNUNG
-                    // --------------------------------------------------
-
-                    let fillColor = "#b7d99a";
-                    let fillOpacity = 0.95;
-
-
-                    // --------------------------------------------------
-                    // DWD-WARNFARBEN
-                    // --------------------------------------------------
-
-                    if (hatVorab) {
-
-                        fillColor = "#ff9800";
-
-                    } else if (hatHitze) {
-
-                        fillColor = "#c8a2ff";
-
-                    } else if (maxLevel === 2) {
-
-                        fillColor = "#ffd600";
-
-                    } else if (maxLevel === 3) {
-
-                        fillColor = "#ff9800";
-
-                    } else if (maxLevel === 4) {
-
-                        fillColor = "#e53935";
-
-                    } else if (maxLevel >= 5) {
-
-                        fillColor = "#8e24aa";
-                    }
-
-
-                    return {
-                        color: "#ffffff",
-                        weight: 0.45,
-                        fillColor: fillColor,
-                        fillOpacity: fillOpacity
-                    };
-                },
-
-
-                // --------------------------------------------------
-                // INTERAKTION PRO LANDKREIS
-                // --------------------------------------------------
-
-                onEachFeature: (
-                    feature,
-                    layer
-                ) => {
-
-                    const landkreis =
-                        feature.properties.DWD_NAME ||
-                        feature.properties.NAME_3 ||
-                        feature.properties.NAME ||
-                        "Unbekannt";
-
-
-                    const daten =
-                        warnungenFuerLandkreis(
-                            landkreis
-                        );
-
-
-                    // Tooltip
-
-                    layer.bindTooltip(
-                        landkreis,
-                        {
-                            sticky: false
-                        }
-                    );
-
-
-                    // --------------------------------------------------
-                    // KLICK
-                    // --------------------------------------------------
-
-                    layer.on(
-                        "click",
-                        () => {
-
-                            const mittelpunkt =
-                                layer
-                                    .getBounds()
-                                    .getCenter();
-
-
-                            // Wetterdaten laden
-
-                            if (
-                                typeof window.ladeWetter ===
-                                "function"
-                            ) {
-
-                                window.ladeWetter(
-                                    mittelpunkt.lat,
-                                    mittelpunkt.lng,
-                                    landkreis
-                                );
-                            }
-
-
-                            // --------------------------------------------------
-                            // POPUP
-                            // --------------------------------------------------
-
-                            let html =
-                                "<h2 style='margin:0;color:#1565C0'>" +
-                                landkreis +
-                                "</h2>" +
-                                "<hr style='margin:8px 0'>";
-
-
-                            if (
-                                daten.length === 0
-                            ) {
-
-                                html +=
-                                    "✅ Keine Warnungen";
-
-                            } else {
-
-                                daten.forEach(w => {
-
-                                    let warnstufe =
-                                        "🟡 Gelb";
-
-
-                                    if (
-                                        String(
-                                            w.event || ""
-                                        )
-                                            .toUpperCase()
-                                            .startsWith(
-                                                "VORABINFORMATION"
-                                            )
-                                    ) {
-
-                                        warnstufe =
-                                            "🟠 Vorabinformation";
-
-                                    } else if (
-                                        Number(w.type) === 8
-                                    ) {
-
-                                        warnstufe =
-                                            "🟣 Hitzewarnung";
-
-                                    } else if (
-                                        Number(w.level) === 3
-                                    ) {
-
-                                        warnstufe =
-                                            "🟠 Orange";
-
-                                    } else if (
-                                        Number(w.level) === 4
-                                    ) {
-
-                                        warnstufe =
-                                            "🔴 Rot";
-
-                                    } else if (
-                                        Number(w.level) >= 5
-                                    ) {
-
-                                        warnstufe =
-                                            "🟣 Violett";
-                                    }
-
-
-                                    html +=
-                                        "<div style='margin-bottom:12px'>" +
-
-                                        "<b>" +
-                                        (
-                                            w.event ||
-                                            "DWD-Warnung"
-                                        ) +
-                                        "</b><br>" +
-
-                                        (
-                                            w.headline || ""
-                                        ) +
-
-                                        "<br><small>" +
-                                        warnstufe +
-                                        "</small>" +
-
-                                        "</div>";
-                                });
-                            }
-
-
-                            layer
-                                .bindPopup(html)
-                                .openPopup();
-                        }
-                    );
-                }
-
-            }).addTo(karte);
-
-
-            // --------------------------------------------------
-            // GLOBAL SPEICHERN
-            // --------------------------------------------------
-
-            window.warnkarte =
-                warnLayer;
-
-
-            console.log(
-                "WARNKARTE FERTIG:",
-                warnLayer
-            );
-
-
-            // Leaflet-Größe nach Laden korrigieren
-
+            const kurzName = zielName.replace(/^LANDKREIS\s+/, "");
+            return (
+                dwdName === zielName ||
+                region === zielName ||
+                region === kurzName ||
+                dwdName === kurzName
+            ) &&
+            w.event &&
+            w.event.toUpperCase().startsWith("VORABINFORMATION");
+        });
+
+        if (landkreis.toUpperCase().includes("ROSENHEIM")) console.log("ROSENHEIM-LAYER:", landkreis, "hatVorabLayer =", hatVorabLayer);
+        if (hatVorabLayer) {
             setTimeout(() => {
+                const renderer = layer._renderer;
+                const svgRoot = renderer && renderer._container;
+                const path = layer._path;
 
-                karte.invalidateSize();
+                if (!svgRoot || !path) return;
 
-            }, 300);
-        })
+                let defs = svgRoot.querySelector("defs");
 
+                if (!defs) {
+                    defs = document.createElementNS(
+                        "http://www.w3.org/2000/svg",
+                        "defs"
+                    );
+                    svgRoot.insertBefore(defs, svgRoot.firstChild);
+                }
 
-        .catch(error => {
+                let pattern = svgRoot.querySelector("#vorabSchraffur");
 
-            console.error(
-                "WARNKARTE KONNTE NICHT GELADEN WERDEN:",
-                error
+                if (!pattern) {
+                    pattern = document.createElementNS(
+                        "http://www.w3.org/2000/svg",
+                        "pattern"
+                    );
+
+                    pattern.setAttribute("id", "vorabSchraffur");
+                    pattern.setAttribute("patternUnits", "userSpaceOnUse");
+                    pattern.setAttribute("width", "12");
+                    pattern.setAttribute("height", "12");
+
+                    const rect = document.createElementNS(
+                        "http://www.w3.org/2000/svg",
+                        "rect"
+                    );
+                    rect.setAttribute("width", "12");
+                    rect.setAttribute("height", "12");
+                    rect.setAttribute("fill", "#FF9800");
+                    rect.setAttribute("fill-opacity", "0.26");
+
+                    const line = document.createElementNS(
+                        "http://www.w3.org/2000/svg",
+                        "line"
+                    );
+                    line.setAttribute("x1", "0");
+                    line.setAttribute("y1", "0");
+                    line.setAttribute("x2", "0");
+                    line.setAttribute("y2", "12");
+                    line.setAttribute("stroke", "#FF9800");
+                    line.setAttribute("stroke-width", "5");
+                    line.setAttribute("stroke-opacity", "1");
+
+                    pattern.appendChild(rect);
+                    pattern.appendChild(line);
+                    defs.appendChild(pattern);
+                }
+
+                path.setAttribute("fill", "url(#vorabSchraffur)");
+                path.setAttribute("fill-opacity", "0.35");
+                path.setAttribute("stroke", "#FF9800");
+                path.setAttribute("stroke-width", "2");
+            }, 100);
+        }
+        // --------------------------------------------------
+        // DWD-Warnsymbol in der Mitte des Landkreises
+        // --------------------------------------------------
+        const alleWarnungenFuerSymbol = Object.values(warnungen.warnings || {})
+            .flat()
+            .concat(Object.values(warnungen.vorabInformation || {}).flat());
+
+        const passendeWarnungFuerSymbol = alleWarnungenFuerSymbol.find(w => {
+            const ziel = normalisiereNameGlobal(landkreis);
+            const region = normalisiereNameGlobal(w.regionName);
+
+            const dwdName = normalisiereNameGlobal(
+                mapping[w.regionName] ??
+                mapping["Landkreis " + w.regionName] ??
+                w.regionName
+            );
+
+            const kurzName = ziel.replace(/^LANDKREIS\s+/, "");
+
+            return (
+                region === ziel ||
+                region === kurzName ||
+                dwdName === ziel ||
+                dwdName === kurzName ||
+                gehoertZurWarnung(w.regionName, landkreis)
             );
         });
 
+        if (passendeWarnungFuerSymbol) {
+
+            let warnSymbol = "⚠️";
+
+            const eventName =
+                String(passendeWarnungFuerSymbol.event || "").toUpperCase();
+
+            if (eventName.includes("GEWITTER")) {
+                warnSymbol = "🌩️";
+            } else if (eventName.includes("STURM")) {
+                warnSymbol = "💨";
+            } else if (
+                eventName.includes("REGEN") ||
+                eventName.includes("DAUERREGEN")
+            ) {
+                warnSymbol = "🌧️";
+            } else if (eventName.includes("SCHNEE")) {
+                warnSymbol = "❄️";
+            } else if (eventName.includes("GLÄTTE")) {
+                warnSymbol = "🧊";
+            } else if (eventName.includes("NEBEL")) {
+                warnSymbol = "🌫️";
+            } else if (eventName.includes("HITZE")) {
+                warnSymbol = "🌡️";
+            }
+
+            const mittelpunkt = layer.getBounds().getCenter();
+
+            const symbolIcon = L.divIcon({
+                className: "dwd-warnsymbol",
+                html: `
+                    <div style="
+                        font-size: 30px;
+                        line-height: 30px;
+                        text-align: center;
+                        filter: drop-shadow(0 1px 2px rgba(0,0,0,0.7));
+                    ">
+                        ${warnSymbol}
+                    </div>
+                `,
+                iconSize: [36, 36],
+                iconAnchor: [18, 18]
+            });
+
+            L.marker(mittelpunkt, {
+                icon: symbolIcon,
+                interactive: false,
+                keyboard: false
+            }).addTo(karte);
+
+            console.log(
+                "WARNSYMBOL GESETZT:",
+                landkreis,
+                warnSymbol,
+                passendeWarnungFuerSymbol.event
+            );
+        }
+        layer.bindTooltip(landkreis, {
+            sticky: false,
+            permanent: false
+        });
+
+        layer.on("click", function() {
+
+            // Angeclickten Landkreis an den bestehenden Wetterbereich übergeben
+            const mittelpunkt = layer.getBounds().getCenter();
+
+            console.log(
+                "WETTER-LANDKREIS GEKLICKT:",
+                landkreis,
+                mittelpunkt.lat,
+                mittelpunkt.lng
+            );
+
+            if (typeof window.ladeWetter === "function") {
+                window.ladeWetter(
+                    mittelpunkt.lat,
+                    mittelpunkt.lng,
+                    landkreis
+                );
+            } else {
+                fetch(`/api/wetter?lat=${mittelpunkt.lat}&lon=${mittelpunkt.lng}&landkreis=${encodeURIComponent(landkreis)}`)
+                    .then(r => r.json())
+                    .then(wetter => {
+                        document.getElementById("ort").textContent = wetter.ort;
+                        document.getElementById("temperatur").textContent = wetter.temperatur + " °C";
+                        document.getElementById("wettertext").textContent = wetter.wettertext;
+                        document.getElementById("wind").textContent = wetter.wind + " km/h";
+                        document.getElementById("boeen").textContent = wetter.boeen + " km/h";
+                        document.getElementById("regen").textContent = wetter.regen + " mm";
+                        document.getElementById("luftdruck").textContent = wetter.luftdruck + " hPa";
+                        document.getElementById("luftfeuchte").textContent = wetter.luftfeuchte + " %";
+                        document.getElementById("gefuehlt").textContent = wetter.gefuehlt + " °C";
+                    })
+                    .catch(error => console.error("Wetter konnte nicht geladen werden:", error));
+            }
+
+            const alleWarnungen = Object.values(warnungen.warnings || {})
+                .flat()
+                .concat(Object.values(warnungen.vorabInformation || {}).flat());
+
+            const zielName = normalisiereNameGlobal(landkreis);
+
+            const daten = alleWarnungen.filter(w => {
+                const region = normalisiereNameGlobal(w.regionName);
+
+                const dwdName = normalisiereNameGlobal(
+                    mapping[w.regionName] ??
+                    mapping["Landkreis " + w.regionName] ??
+                    w.regionName
+                );
+
+                const kurzName = zielName.replace(/^LANDKREIS\s+/, "");
+
+                return (
+                    dwdName === zielName ||
+                    region === zielName ||
+                    region === kurzName ||
+                    dwdName === kurzName ||
+                    gehoertZurWarnung(w.regionName, landkreis)
+                );
+            });
+
+            console.log("KLICK-WARNUNGEN:", landkreis, daten);
+
+            let html =
+                "<h2 style='margin:0;color:#1565C0'>" +
+                landkreis +
+                "</h2>" +
+                "<hr style='margin:8px 0'>";
+
+            if (daten.length === 0) {
+
+                html += "✅ Keine Warnungen";
+
+            } else {
+
+                daten.forEach(w => {
+
+                    let warnstufe = "<span style='color:#FFD600;font-weight:bold'>🟡 Gelb</span>"; if (w.event && w.event.toUpperCase().startsWith("VORABINFORMATION")) warnstufe = "<span style='color:#FF9800;font-weight:bold'>🟠 Vorabinformation</span>"; else if (w.type === 8) warnstufe = "<span style='color:#C8A2FF;font-weight:bold'>🟣 Hitzewarnung</span>"; else if (w.level === 3) warnstufe = "<span style='color:#FF9800;font-weight:bold'>🟠 Orange</span>"; else if (w.level === 4) warnstufe = "<span style='color:#E53935;font-weight:bold'>🔴 Rot</span>"; else if (w.level >= 5) warnstufe = "<span style='color:#8E24AA;font-weight:bold'>🟣 Violett</span>";
+
+                    let gueltigBis = "";
+
+                    if (w.end) {
+                        gueltigBis =
+                            "<b>🕒 Gültig bis:</b> " +
+                            new Date(w.end).toLocaleString("de-DE", {
+                                day: "2-digit",
+                                month: "2-digit",
+                                year: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit"
+                            });
+                    }
+
+                    html +=
+                        "<div style='margin-bottom:12px'>" +
+                        "<span style='font-size:22px'>⚠️</span> " +
+                        "<b style='color:#d32f2f'>" +
+                        w.event +
+                        "</b><br>" +
+                        "<span style='font-size:14px'>" +
+                        w.headline +
+                        "</span><br>" +
+                        "<small>" +
+                        warnstufe +
+                        "<br>" +
+                        gueltigBis +
+                        "</small>" +
+                        "</div>";
+                });
+            }
+
+            layer.bindPopup(html).openPopup();
+
+        });
+    }
+
+}).addTo(karte);
+
+        });
+
 });
+
+
+
+
+
