@@ -3,38 +3,10 @@ import time
 
 
 _WETTER_CACHE = {}
-_CACHE_SEKUNDEN = 60
+_CACHE_SEKUNDEN = 300
 
-
-def ort_ermitteln(lat, lon):
-    try:
-        url = (
-            "https://nominatim.openstreetmap.org/reverse"
-            f"?format=jsonv2&lat={lat}&lon={lon}"
-        )
-
-        antwort = requests.get(
-            url,
-            headers={"User-Agent": "Wetterstudio-Bad-Feilnbach-AI"},
-            timeout=10,
-        )
-
-        antwort.raise_for_status()
-
-        daten = antwort.json()
-        adresse = daten.get("address", {})
-
-        return (
-            adresse.get("village")
-            or adresse.get("town")
-            or adresse.get("city")
-            or adresse.get("municipality")
-            or adresse.get("county")
-            or "Unbekannt"
-        )
-
-    except Exception:
-        return "Unbekannt"
+_LETZTE_GUELTIGE_DATEN = None
+_NAECHSTER_OPENMETEO_VERSUCH = 0
 
 
 def wettertext(code):
@@ -62,18 +34,45 @@ def wettertext(code):
 
 def aktuelle_wetterdaten(lat=48.0, lon=11.8):
 
+    global _LETZTE_GUELTIGE_DATEN
+    global _NAECHSTER_OPENMETEO_VERSUCH
+
     cache_key = (
         round(lat, 4),
         round(lon, 4)
     )
 
+    jetzt = time.time()
+
     cached = _WETTER_CACHE.get(cache_key)
 
     if cached:
-        alter = time.time() - cached["zeit"]
+        alter = jetzt - cached["zeit"]
 
         if alter < _CACHE_SEKUNDEN:
             return cached["daten"]
+
+    if jetzt < _NAECHSTER_OPENMETEO_VERSUCH:
+
+        if cached:
+            return cached["daten"]
+
+        if _LETZTE_GUELTIGE_DATEN:
+            return _LETZTE_GUELTIGE_DATEN.copy()
+
+        return {
+            "ort": "Unbekannt",
+            "temperatur": 0.0,
+            "gefuehlt": 0.0,
+            "luftfeuchte": 0,
+            "wind": 0.0,
+            "boeen": 0.0,
+            "regen": 0.0,
+            "luftdruck": 0.0,
+            "weather_code": -1,
+            "wettertext": "Wetterdaten vorübergehend nicht verfügbar",
+            "daily": {},
+        }
 
     url = (
         "https://api.open-meteo.com/v1/forecast"
@@ -88,6 +87,7 @@ def aktuelle_wetterdaten(lat=48.0, lon=11.8):
         "temperature_2m_min,"
         "precipitation_probability_max"
         "&forecast_days=7"
+        "&timezone=Europe%2FBerlin"
     )
 
     try:
@@ -100,6 +100,37 @@ def aktuelle_wetterdaten(lat=48.0, lon=11.8):
             }
         )
 
+        if antwort.status_code == 429:
+
+            print(
+                "OPENMETEO-FEHLER: HTTP 429 Too Many Requests",
+                flush=True
+            )
+
+            _NAECHSTER_OPENMETEO_VERSUCH = (
+                time.time() + 300
+            )
+
+            if cached:
+                return cached["daten"]
+
+            if _LETZTE_GUELTIGE_DATEN:
+                return _LETZTE_GUELTIGE_DATEN.copy()
+
+            return {
+                "ort": "Unbekannt",
+                "temperatur": 0.0,
+                "gefuehlt": 0.0,
+                "luftfeuchte": 0,
+                "wind": 0.0,
+                "boeen": 0.0,
+                "regen": 0.0,
+                "luftdruck": 0.0,
+                "weather_code": -1,
+                "wettertext": "Wetterdaten vorübergehend nicht verfügbar",
+                "daily": {},
+            }
+
         antwort.raise_for_status()
 
         daten = antwort.json()
@@ -107,30 +138,58 @@ def aktuelle_wetterdaten(lat=48.0, lon=11.8):
         current = daten.get("current", {})
         daily = daten.get("daily", {})
 
-        code = current.get("weather_code", -1)
+        code = current.get(
+            "weather_code",
+            -1
+        )
 
         ergebnis = {
-            "ort": ort_ermitteln(lat, lon),
+            "ort": "Unbekannt",
             "temperatur": round(
-                current.get("temperature_2m", 0), 1
+                current.get(
+                    "temperature_2m",
+                    0
+                ),
+                1
             ),
             "gefuehlt": round(
-                current.get("apparent_temperature", 0), 1
+                current.get(
+                    "apparent_temperature",
+                    0
+                ),
+                1
             ),
             "luftfeuchte": current.get(
-                "relative_humidity_2m", 0
+                "relative_humidity_2m",
+                0
             ),
             "wind": round(
-                current.get("wind_speed_10m", 0), 1
+                current.get(
+                    "wind_speed_10m",
+                    0
+                ),
+                1
             ),
             "boeen": round(
-                current.get("wind_gusts_10m", 0), 1
+                current.get(
+                    "wind_gusts_10m",
+                    0
+                ),
+                1
             ),
             "regen": round(
-                current.get("precipitation", 0), 1
+                current.get(
+                    "precipitation",
+                    0
+                ),
+                1
             ),
             "luftdruck": round(
-                current.get("surface_pressure", 0), 1
+                current.get(
+                    "surface_pressure",
+                    0
+                ),
+                1
             ),
             "weather_code": code,
             "wettertext": wettertext(code),
@@ -142,6 +201,10 @@ def aktuelle_wetterdaten(lat=48.0, lon=11.8):
             "daten": ergebnis,
         }
 
+        _LETZTE_GUELTIGE_DATEN = ergebnis.copy()
+
+        _NAECHSTER_OPENMETEO_VERSUCH = 0
+
         return ergebnis
 
     except Exception as e:
@@ -152,24 +215,26 @@ def aktuelle_wetterdaten(lat=48.0, lon=11.8):
             flush=True
         )
 
-        if cached:
-            print(
-                "OPENMETEO: Verwende zuletzt gespeicherte Wetterdaten.",
-                flush=True
-            )
+        _NAECHSTER_OPENMETEO_VERSUCH = (
+            time.time() + 60
+        )
 
+        if cached:
             return cached["daten"]
 
+        if _LETZTE_GUELTIGE_DATEN:
+            return _LETZTE_GUELTIGE_DATEN.copy()
+
         return {
-            "ort": f"FEHLER: {type(e).__name__}",
-            "temperatur": str(e),
-            "gefuehlt": "--",
-            "luftfeuchte": "--",
-            "wind": "--",
-            "boeen": "--",
-            "regen": "--",
-            "luftdruck": "--",
+            "ort": "Unbekannt",
+            "temperatur": 0.0,
+            "gefuehlt": 0.0,
+            "luftfeuchte": 0,
+            "wind": 0.0,
+            "boeen": 0.0,
+            "regen": 0.0,
+            "luftdruck": 0.0,
             "weather_code": -1,
-            "wettertext": repr(e),
+            "wettertext": "Wetterdaten vorübergehend nicht verfügbar",
             "daily": {},
         }

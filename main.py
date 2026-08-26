@@ -1,8 +1,13 @@
-from fastapi import FastAPI, Request, Query
+from fastapi import FastAPI, Request, Query, Body
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import JSONResponse
-from modules.dwd import lade_warnungen, statistik, landkreis_warnungen
+
+from modules.dwd import (
+    lade_warnungen,
+    statistik,
+    landkreis_warnungen
+)
 from modules.openmeteo import aktuelle_wetterdaten
 from modules.stormtracking import (
     stormtracking_status,
@@ -13,15 +18,21 @@ from modules.stormtracking import (
 from modules.radolan import radar_status
 from modules.pegel import lade_pegel
 from config import VERSION, FEATURES
-from fastapi import Body
+
 from datetime import datetime
 import csv
-import asyncio
-from functools import lru_cache
+
+
 app = FastAPI(title="Wetterstudio Bad Feilnbach AI")
 
+
 # Statische Dateien
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount(
+    "/static",
+    StaticFiles(directory="static"),
+    name="static"
+)
+
 
 # HTML-Templates
 templates = Jinja2Templates(directory="templates")
@@ -29,32 +40,44 @@ templates = Jinja2Templates(directory="templates")
 
 @app.get("/api/warnungen")
 async def api_warnungen():
-
     daten = lade_warnungen()
     return landkreis_warnungen(daten)
+
 
 @app.get("/api/dwd-warnungen")
 async def api_dwd_warnungen():
     return lade_warnungen()
+
+
 @app.get("/api/stormtracking")
 async def api_stormtracking():
     return stormtracking_status()
+
+
 @app.get("/api/radarstatus")
 async def api_radarstatus():
     return radar_download_status()
+
+
 @app.get("/api/radarinfo")
 async def api_radarinfo():
     return radar_info()
+
+
 @app.get("/api/radardownload")
 async def api_radardownload():
     return radar_download()
+
+
 @app.get("/api/radolanstatus")
 async def api_radolanstatus():
     return radar_status()
+
+
 @app.get("/api/radarzellen")
 async def api_radarzellen():
-    from modules.test_tracking import TESTMODUS, test_zellen 
 
+    from modules.test_tracking import TESTMODUS, test_zellen
     from pathlib import Path
     import json
 
@@ -63,124 +86,219 @@ async def api_radarzellen():
     if not datei.exists():
         return JSONResponse([])
 
-        datei = Path("static/data/radarzellen.json")
-
-    if not datei.exists():
-        return JSONResponse([])
-
     if TESTMODUS:
         return JSONResponse(test_zellen())
 
-    with open(datei, "r", encoding="utf-8") as f:
+    with open(
+        datei,
+        "r",
+        encoding="utf-8"
+    ) as f:
         daten = json.load(f)
 
     return JSONResponse(daten)
+
+
 @app.get("/api/pegel")
 async def api_pegel():
+
     daten = lade_pegel()
+
     if daten is None:
-        return {"status": "error", "message": "Keine Pegeldaten verfügbar"}
-    return {"status": "ok", "daten": daten}
-# Neue Wetter-API
+        return {
+            "status": "error",
+            "message": "Keine Pegeldaten verfügbar"
+        }
+
+    return {
+        "status": "ok",
+        "daten": daten
+    }
+
+
+# Wetter-API
 @app.get("/api/wetter")
 async def api_wetter(
+
     lat: float = Query(...),
     lon: float = Query(...),
     landkreis: str = Query("")
+
 ):
-    wetter = aktuelle_wetterdaten(lat, lon)
+
+    wetter = aktuelle_wetterdaten(
+        lat,
+        lon
+    )
 
     if landkreis:
         wetter["ort"] = landkreis
 
     return wetter
 
+
 print(">>> STARTSEITE WIRD AUS MAIN.PY GELADEN <<<")
+
+
 @app.get("/")
 async def startseite(request: Request):
 
     # DWD
     daten = lade_warnungen()
+
     stats = statistik(daten)
+
     landkreise = landkreis_warnungen(daten)
 
+
+    # Tornado-Warnungen
     tornado_warnungen = []
 
     for kreis in landkreise.values():
-        for warnung in kreis:
-            if "tornado" in warnung["event"].lower():
-                tornado_warnungen.append(warnung)
 
-    ticker_info = "✅ Zurzeit liegen keine neuen Warnmeldungen vor."
+        for warnung in kreis:
+
+            if "tornado" in warnung["event"].lower():
+
+                tornado_warnungen.append(
+                    warnung
+                )
+
+
+    # Ticker
+    ticker_info = (
+        "✅ Zurzeit liegen keine neuen Warnmeldungen vor."
+    )
+
 
     if stats["gewitter"] > 0:
+
         ticker_info = (
             f"🌩 Neue Gewitterwarnung: Der DWD meldet aktuell "
-            f"{stats['gewitter']} Gewitterwarnung(en). Bitte die Wetterlage verfolgen."
+            f"{stats['gewitter']} Gewitterwarnung(en). "
+            f"Bitte die Wetterlage verfolgen."
         )
+
 
     elif stats["sturm"] > 0:
+
         ticker_info = (
-            f"💨 Neue Sturmwarnung: Aktuell {stats['sturm']} Sturmwarnung(en) aktiv."
+            f"💨 Neue Sturmwarnung: Aktuell "
+            f"{stats['sturm']} Sturmwarnung(en) aktiv."
         )
+
 
     elif stats["starkregen"] > 0:
+
         ticker_info = (
-            f"🌧 Neue Starkregenwarnung: Der DWD warnt derzeit vor Starkregen."
+            "🌧 Neue Starkregenwarnung: "
+            "Der DWD warnt derzeit vor Starkregen."
         )
-   
 
-    
 
+    # Entwicklungsstand
     gesamt = len(FEATURES)
-    fertig = sum(1 for status in FEATURES.values() if status)
-    entwicklung = round(fertig / gesamt * 100)
 
-    # Open-Meteo
-    wetter = aktuelle_wetterdaten()
+    fertig = sum(
+        1
+        for status in FEATURES.values()
+        if status
+    )
+
+    entwicklung = round(
+        fertig / gesamt * 100
+    )
+
+
+    # KEIN zusätzlicher Open-Meteo-Aufruf hier.
+    # Die aktuellen Wetterdaten werden im Browser
+    # über /api/wetter geladen.
+
     stormtracking = stormtracking_status()
+
+
     return templates.TemplateResponse(
+
         request=request,
+
         name="index.html",
+
         context={
+
             "titel": "Wetterstudio Bad Feilnbach AI",
 
             "landkreise": landkreise,
+
             "tornado_warnungen": tornado_warnungen,
+
             "warnungen": stats["gesamt"],
 
+
             "gewitter": stats["gewitter"],
+
             "tornados": stats["tornado"],
-            "ort": wetter["ort"],
-            "temperatur": f'{wetter["temperatur"]} °C',
-            "wind": f'{wetter["wind"]} km/h',
-            "boeen": f'{wetter["boeen"]} km/h',
-            "regen": f'{wetter["regen"]} mm',
-            "luftdruck": f'{wetter["luftdruck"]} hPa',
-            "luftfeuchte": f'{wetter["luftfeuchte"]} %',
-            "gefuehlt": f'{wetter["gefuehlt"]} °C',
-            "weather_code": wetter["weather_code"],
-            "wettertext": wetter["wettertext"],
-            "daily": wetter["daily"],
+
+
+            # Platzhalter:
+            # Die echten Wetterdaten werden über
+            # /api/wetter nachgeladen.
+
+            "ort": "Bad Feilnbach",
+
+            "temperatur": "-- °C",
+
+            "wind": "-- km/h",
+
+            "boeen": "-- km/h",
+
+            "regen": "-- mm",
+
+            "luftdruck": "-- hPa",
+
+            "luftfeuchte": "-- %",
+
+            "gefuehlt": "-- °C",
+
+            "weather_code": -1,
+
+            "wettertext": "Wetter wird geladen...",
+
+            "daily": {},
+
 
             "gelb": stats["gelb"],
+
             "orange": stats["orange"],
+
             "rot": stats["rot"],
+
             "violett": stats["violett"],
 
+
             "sturm": stats["sturm"],
+
             "starkregen": stats["starkregen"],
+
             "hitze": stats["hitze"],
+
             "schnee": stats["schnee"],
+
 
             "titel_seite": "Wetterstudio Bad Feilnbach AI",
 
+
             "features_fertig": fertig,
+
             "features_gesamt": gesamt,
+
             "entwicklung": entwicklung,
+
             "ticker_info": ticker_info,
+
         },
     )
+
+
 @app.post("/api/feedback")
 async def feedback(data: dict = Body(...)):
 
@@ -194,13 +312,24 @@ async def feedback(data: dict = Body(...)):
         writer = csv.writer(datei)
 
         writer.writerow([
-            datetime.now().strftime("%d.%m.%Y %H:%M:%S"),
-            data.get("name", ""),
-            data.get("feedback", "")
+
+            datetime.now().strftime(
+                "%d.%m.%Y %H:%M:%S"
+            ),
+
+            data.get(
+                "name",
+                ""
+            ),
+
+            data.get(
+                "feedback",
+                ""
+            )
+
         ])
+
 
     return {
         "status": "ok"
     }
-
-
