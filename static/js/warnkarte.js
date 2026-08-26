@@ -10,851 +10,977 @@ document.addEventListener("DOMContentLoaded", async () => {
         preferCanvas: false
     }).setView([51.0, 10.3], 5);
 
-    document.getElementById("karte").style.background = "#d7e3ec";
+    document.getElementById("karte").style.background =
+        "#d7e3ec";
 
     // --------------------------------------------------
-    // SVG-SCHRAFFUR FÜR VORABINFORMATIONEN
+    // SVG-PATTERN FÜR VORABINFORMATIONEN
     // --------------------------------------------------
+
+    const svgRenderer = L.svg();
+
+    svgRenderer.addTo(karte);
+
+    const svgRoot =
+        svgRenderer._container;
 
     const vorabPattern =
         '<defs>' +
         '<pattern id="vorabSchraffur" ' +
         'patternUnits="userSpaceOnUse" ' +
-        'width="8" height="8">' +
-        '<rect width="8" height="8" ' +
-        'fill="#FF9800" fill-opacity="0.20"/>' +
-        '<line x1="0" y1="0" x2="0" y2="8" ' +
-        'stroke="#FF9800" stroke-width="5" stroke-opacity="1"/>' +
+        'width="12" height="12">' +
+        '<rect width="12" height="12" ' +
+        'fill="#FF9800" fill-opacity="0.26"/>' +
+        '<line x1="0" y1="0" ' +
+        'x2="0" y2="12" ' +
+        'stroke="#FF9800" ' +
+        'stroke-width="5" ' +
+        'stroke-opacity="1"/>' +
         '</pattern>' +
         '</defs>';
 
-    const svgRenderer = L.svg();
-    svgRenderer.addTo(karte);
-
-    const svgRoot = svgRenderer._container;
-
     if (
         svgRoot &&
-        !svgRoot.querySelector("#vorabSchraffur")
+        !svgRoot.querySelector(
+            "#vorabSchraffur"
+        )
     ) {
+
         svgRoot.insertAdjacentHTML(
             "afterbegin",
             vorabPattern
         );
     }
 
-    // --------------------------------------------------
-    // DWD-WARNUNGEN UND MAPPING LADEN
-    // --------------------------------------------------
+    try {
 
-    const antwort = await fetch("/api/dwd-warnungen");
-    const warnungen = await antwort.json();
+        // --------------------------------------------------
+        // DWD-WARNUNGEN LADEN
+        // --------------------------------------------------
 
-    const mappingAntwort =
-        await fetch("/static/mapping.json");
+        const antwort =
+            await fetch(
+                "/api/dwd-warnungen"
+            );
 
-    const mapping =
-        await mappingAntwort.json();
+        const warnungen =
+            await antwort.json();
 
-    // --------------------------------------------------
-    // SONDERZUGEBIETE
-    // --------------------------------------------------
+        // --------------------------------------------------
+        // MAPPING LADEN
+        // --------------------------------------------------
 
-    const sonderGebiete = {
+        const mappingAntwort =
+            await fetch(
+                "/static/mapping.json"
+            );
 
-        "Kreis und Stadt München": [
-            "Stadt München",
-            "Landkreis München"
-        ],
+        const mapping =
+            await mappingAntwort.json();
 
-        "Kreis und Stadt Augsburg": [
-            "Stadt Augsburg",
-            "Landkreis Augsburg"
-        ],
+        // --------------------------------------------------
+        // SONDERGEBIETE
+        // --------------------------------------------------
 
-        "Kreis und Stadt Rosenheim": [
-            "Stadt Rosenheim",
-            "Landkreis Rosenheim"
-        ],
+        const sonderGebiete = {
 
-        "Alb-Donau-Kreis und Stadt Ulm": [
-            "Landkreis Alb-Donau-Kreis",
-            "Ulm"
-        ],
+            "Kreis und Stadt München": [
+                "Stadt München",
+                "Landkreis München"
+            ],
 
-        "Kreis Nordfriesland - Binnenland": [
-            "Landkreis Nordfriesland"
-        ],
+            "Kreis und Stadt Augsburg": [
+                "Stadt Augsburg",
+                "Landkreis Augsburg"
+            ],
 
-        "Kreis Nordfriesland - Küste": [
-            "Landkreis Nordfriesland"
-        ],
+            "Kreis und Stadt Rosenheim": [
+                "Stadt Rosenheim",
+                "Landkreis Rosenheim"
+            ],
 
-        "Kreis Schleswig-Flensburg - Binnenland": [
-            "Schleswig-Flensburg"
-        ],
+            "Alb-Donau-Kreis und Stadt Ulm": [
+                "Landkreis Alb-Donau-Kreis",
+                "Ulm"
+            ],
 
-        "Kreis Schleswig-Flensburg - Küste": [
-            "Schleswig-Flensburg"
-        ]
-    };
+            "Kreis Nordfriesland - Binnenland": [
+                "Landkreis Nordfriesland"
+            ],
 
-    // --------------------------------------------------
-    // NAMEN NORMALISIEREN
-    //
-    // WICHTIG:
-    // "Kreis Plön - Küste" wird zu "PLÖN"
-    // "Kreis Rendsburg-Eckernförde - Binnenland"
-    // wird zu "RENDSBURG-ECKERNFÖRDE"
-    // --------------------------------------------------
+            "Kreis Nordfriesland - Küste": [
+                "Landkreis Nordfriesland"
+            ],
 
-    const normalisiereName = n =>
-        String(n || "")
-            .replace(
-                /^(Landkreis|Kreis|Stadt|LK)\s+/i,
-                ""
-            )
-            .replace(
-                /\s+-\s+(Binnenland|Küste)\s*$/i,
-                ""
-            )
-            .replace(/\s+/g, " ")
-            .trim()
-            .toUpperCase();
+            "Kreis Schleswig-Flensburg - Binnenland": [
+                "Schleswig-Flensburg"
+            ],
 
-    const gehoertZurWarnung = (
-        regionName,
-        landkreisName
-    ) => {
+            "Kreis Schleswig-Flensburg - Küste": [
+                "Schleswig-Flensburg"
+            ]
+        };
 
-        const region =
-            normalisiereName(regionName);
+        // --------------------------------------------------
+        // NAMEN NORMALISIEREN
+        //
+        // Beispiele:
+        //
+        // "Kreis Plön - Küste"
+        // -> "PLÖN"
+        //
+        // "Kreis Rendsburg-Eckernförde - Binnenland"
+        // -> "RENDSBURG-ECKERNFÖRDE"
+        //
+        // "Stadt Kiel"
+        // -> "KIEL"
+        //
+        // "Landkreis Ostholstein"
+        // -> "OSTHOLSTEIN"
+        // --------------------------------------------------
 
-        const landkreis =
-            normalisiereName(landkreisName);
-
-        if (region === landkreis) {
-            return true;
-        }
-
-        const mapped =
-            mapping[regionName] ??
-            mapping["Landkreis " + regionName];
-
-        if (
-            mapped &&
-            normalisiereName(mapped) === landkreis
-        ) {
-            return true;
-        }
-
-        if (sonderGebiete[regionName]) {
-            return sonderGebiete[regionName]
-                .some(name =>
-                    normalisiereName(name) === landkreis
-                );
-        }
-
-        return false;
-    };
-
-    // --------------------------------------------------
-    // ALLE WARNUNGEN ZUSAMMENFÜHREN
-    // --------------------------------------------------
-
-    const alleWarnungen = [
-        ...Object.values(
-            warnungen.warnings || {}
-        ).flat(),
-
-        ...Object.values(
-            warnungen.vorabInformation || {}
-        ).flat()
-    ];
-
-    console.log(
-        "DWD-Warnungen geladen:",
-        alleWarnungen
-    );
-
-    // --------------------------------------------------
-    // LANDKREIS-WARNUNGEN FINDEN
-    // --------------------------------------------------
-
-    const warnungenFuerLandkreis =
-        landkreisName =>
-
-            alleWarnungen.filter(w =>
-                gehoertZurWarnung(
-                    w.regionName,
-                    landkreisName
+        const normalisiereName = n =>
+            String(n || "")
+                .replace(
+                    /^(Landkreis|Kreis|Stadt|LK)\s+/i,
+                    ""
                 )
+                .replace(
+                    /\s+-\s+(Binnenland|Küste)\s*$/i,
+                    ""
+                )
+                .replace(
+                    /\s+/g,
+                    " "
+                )
+                .trim()
+                .toUpperCase();
+
+        // --------------------------------------------------
+        // WARNREGION MIT LANDKREIS VERGLEICHEN
+        // --------------------------------------------------
+
+        const gehoertZurWarnung = (
+            regionName,
+            landkreisName
+        ) => {
+
+            const region =
+                normalisiereName(
+                    regionName
+                );
+
+            const landkreis =
+                normalisiereName(
+                    landkreisName
+                );
+
+            if (
+                !region ||
+                !landkreis
+            ) {
+                return false;
+            }
+
+            // Direkter Vergleich
+            if (
+                region === landkreis
+            ) {
+                return true;
+            }
+
+            // Mapping prüfen
+            const mapped =
+                mapping[regionName] ??
+                mapping[
+                    "Landkreis " +
+                    regionName
+                ];
+
+            if (
+                mapped &&
+                normalisiereName(mapped) ===
+                landkreis
+            ) {
+                return true;
+            }
+
+            // Sondergebiete prüfen
+            if (
+                sonderGebiete[regionName]
+            ) {
+
+                return sonderGebiete[
+                    regionName
+                ].some(
+                    name =>
+                        normalisiereName(name) ===
+                        landkreis
+                );
+            }
+
+            return false;
+        };
+
+        // --------------------------------------------------
+        // ALLE WARNUNGEN ZUSAMMENFÜHREN
+        // --------------------------------------------------
+
+        const alleWarnungen = [
+
+            ...Object.values(
+                warnungen.warnings || {}
+            ).flat(),
+
+            ...Object.values(
+                warnungen.vorabInformation || {}
+            ).flat()
+        ];
+
+        console.log(
+            "DWD-Warnungen geladen:",
+            alleWarnungen
+        );
+
+        // --------------------------------------------------
+        // WARNUNGEN FÜR GEOJSON-FEATURE FINDEN
+        //
+        // Es werden mehrere mögliche Namen
+        // des Landkreises geprüft.
+        // --------------------------------------------------
+
+        const warnungenFuerFeature =
+            feature => {
+
+                const properties =
+                    feature.properties || {};
+
+                const moeglicheNamen = [
+
+                    properties.DWD_NAME,
+
+                    properties.NAME_3,
+
+                    properties.NAME,
+
+                    ...Object.values(
+                        properties
+                    )
+                ]
+                    .filter(
+                        value =>
+                            typeof value ===
+                            "string"
+                    )
+                    .filter(
+                        value =>
+                            value.trim() !== ""
+                    );
+
+                return alleWarnungen.filter(
+                    warnung =>
+
+                        moeglicheNamen.some(
+                            landkreisName =>
+                                gehoertZurWarnung(
+                                    warnung.regionName,
+                                    landkreisName
+                                )
+                        )
+                );
+            };
+
+        // --------------------------------------------------
+        // DEUTSCHLAND-LANDKREISE LADEN
+        // --------------------------------------------------
+
+        const geoAntwort =
+            await fetch(
+                "/static/geojson/landkreise_neu.geojson"
             );
 
-    // --------------------------------------------------
-    // DEUTSCHLAND-LANDKREISE LADEN
-    // --------------------------------------------------
+        const data =
+            await geoAntwort.json();
 
-    fetch(
-        "/static/geojson/landkreise_neu.geojson"
-    )
-        .then(r => r.json())
+        const deutschlandGrenzen =
+            L.geoJSON(
+                data
+            ).getBounds();
 
-        .then(data => {
+        karte.fitBounds(
+            deutschlandGrenzen,
+            {
+                padding: [10, 10]
+            }
+        );
 
-            const deutschlandGrenzen =
-                L.geoJSON(data).getBounds();
+        // --------------------------------------------------
+        // LANDKREISE ZEICHNEN
+        // --------------------------------------------------
 
-            karte.fitBounds(
-                deutschlandGrenzen,
-                {
-                    padding: [10, 10]
-                }
-            );
-
-            // ----------------------------------------------
-            // LANDKREISE ZEICHNEN
-            // ----------------------------------------------
-
-            const warnLayer = L.geoJSON(
+        const warnLayer =
+            L.geoJSON(
                 data,
                 {
 
-                    renderer: svgRenderer,
+                    renderer:
+                        svgRenderer,
 
                     // --------------------------------------
                     // FARBEN
                     // --------------------------------------
 
-                    style: feature => {
+                    style:
+                        feature => {
 
-                        const landkreis =
-                            feature.properties.DWD_NAME ||
-                            feature.properties.NAME_3 ||
-                            feature.properties.NAME ||
-                            "";
+                            const daten =
+                                warnungenFuerFeature(
+                                    feature
+                                );
 
-                        const daten =
-                            warnungenFuerLandkreis(
-                                landkreis
-                            );
+                            const hatVorab =
+                                daten.some(
+                                    w =>
+                                        String(
+                                            w.event ||
+                                            ""
+                                        )
+                                            .toUpperCase()
+                                            .startsWith(
+                                                "VORABINFORMATION"
+                                            )
+                                );
 
-                        const hatVorab =
-                            daten.some(w =>
-                                String(
-                                    w.event || ""
-                                )
-                                    .toUpperCase()
-                                    .startsWith(
-                                        "VORABINFORMATION"
-                                    )
-                            );
-
-                        const hatHitze =
-                            daten.some(w =>
-                                Number(w.type) === 8
-                            );
-
-                        let maxLevel = 0;
-
-                        daten.forEach(w => {
-
-                            if (
-                                Number(w.type) !== 8
-                            ) {
-
-                                maxLevel =
-                                    Math.max(
-                                        maxLevel,
+                            const hatHitze =
+                                daten.some(
+                                    w =>
                                         Number(
-                                            w.level
-                                        ) || 0
-                                    );
-                            }
-                        });
+                                            w.type
+                                        ) === 8
+                                );
 
-                        let fillColor =
-                            "#8BC34A";
+                            let maxLevel =
+                                0;
 
-                        let fillOpacity =
-                            0.55;
+                            daten.forEach(
+                                w => {
 
-                        if (hatVorab) {
+                                    if (
+                                        Number(
+                                            w.type
+                                        ) !== 8
+                                    ) {
 
-                            fillColor =
-                                "#FF9800";
+                                        maxLevel =
+                                            Math.max(
+                                                maxLevel,
+                                                Number(
+                                                    w.level
+                                                ) || 0
+                                            );
+                                    }
+                                }
+                            );
 
-                            fillOpacity =
-                                0.35;
+                            let fillColor =
+                                "#8BC34A";
 
-                        } else if (hatHitze) {
-
-                            fillColor =
-                                "#C8A2FF";
-
-                            fillOpacity =
-                                0.60;
-
-                        } else if (
-                            maxLevel === 2
-                        ) {
-
-                            fillColor =
-                                "#FFD600";
-
-                            fillOpacity =
+                            let fillOpacity =
                                 0.55;
 
-                        } else if (
-                            maxLevel === 3
-                        ) {
-
-                            fillColor =
-                                "#FF9800";
-
-                            fillOpacity =
-                                0.60;
-
-                        } else if (
-                            maxLevel === 4
-                        ) {
-
-                            fillColor =
-                                "#E53935";
-
-                            fillOpacity =
-                                0.65;
-
-                        } else if (
-                            maxLevel >= 5
-                        ) {
-
-                            fillColor =
-                                "#8E24AA";
-
-                            fillOpacity =
-                                0.70;
-                        }
-
-                        return {
-
-                            color:
-                                "#ffffff",
-
-                            weight:
-                                0.35,
-
-                            fillColor:
+                            if (
                                 hatVorab
-                                    ? "url(#vorabSchraffur)"
-                                    : fillColor,
+                            ) {
 
-                            fillOpacity:
-                                fillOpacity
-                        };
-                    },
+                                fillColor =
+                                    "#FF9800";
+
+                                fillOpacity =
+                                    0.35;
+
+                            } else if (
+                                hatHitze
+                            ) {
+
+                                fillColor =
+                                    "#C8A2FF";
+
+                                fillOpacity =
+                                    0.60;
+
+                            } else if (
+                                maxLevel === 2
+                            ) {
+
+                                fillColor =
+                                    "#FFD600";
+
+                                fillOpacity =
+                                    0.55;
+
+                            } else if (
+                                maxLevel === 3
+                            ) {
+
+                                fillColor =
+                                    "#FF9800";
+
+                                fillOpacity =
+                                    0.60;
+
+                            } else if (
+                                maxLevel === 4
+                            ) {
+
+                                fillColor =
+                                    "#E53935";
+
+                                fillOpacity =
+                                    0.65;
+
+                            } else if (
+                                maxLevel >= 5
+                            ) {
+
+                                fillColor =
+                                    "#8E24AA";
+
+                                fillOpacity =
+                                    0.70;
+                            }
+
+                            return {
+
+                                color:
+                                    "#ffffff",
+
+                                weight:
+                                    0.35,
+
+                                fillColor:
+                                    hatVorab
+                                        ? "url(#vorabSchraffur)"
+                                        : fillColor,
+
+                                fillOpacity:
+                                    fillOpacity
+                            };
+                        },
 
                     // --------------------------------------
                     // INTERAKTION
                     // --------------------------------------
 
-                    onEachFeature: (
-                        feature,
-                        layer
-                    ) => {
+                    onEachFeature:
+                        (
+                            feature,
+                            layer
+                        ) => {
 
-                        const landkreis =
-                            feature.properties.DWD_NAME ||
-                            feature.properties.NAME_3 ||
-                            feature.properties.NAME ||
-                            "Unbekannt";
+                            const properties =
+                                feature.properties ||
+                                {};
 
-                        const daten =
-                            warnungenFuerLandkreis(
-                                landkreis
+                            const landkreis =
+                                properties.DWD_NAME ||
+                                properties.NAME_3 ||
+                                properties.NAME ||
+                                "Unbekannt";
+
+                            const daten =
+                                warnungenFuerFeature(
+                                    feature
+                                );
+
+                            // ----------------------------------
+                            // TOOLTIP
+                            // ----------------------------------
+
+                            layer.bindTooltip(
+                                landkreis,
+                                {
+                                    sticky: false,
+                                    permanent: false
+                                }
                             );
 
-                        // ----------------------------------
-                        // TOOLTIP
-                        // ----------------------------------
-
-                        layer.bindTooltip(
-                            landkreis,
-                            {
-                                sticky: false,
-                                permanent: false
-                            }
-                        );
-
-                        // ----------------------------------
-                        // WARNSYMBOL
-                        // ----------------------------------
-
-                        if (
-                            daten.length > 0
-                        ) {
-
-                            const warnung =
-                                daten[0];
-
-                            let warnSymbol =
-                                "⚠️";
-
-                            const eventName =
-                                String(
-                                    warnung.event || ""
-                                )
-                                    .toUpperCase();
+                            // ----------------------------------
+                            // WARNSYMBOL
+                            // ----------------------------------
 
                             if (
-                                eventName.includes(
-                                    "GEWITTER"
-                                )
+                                daten.length > 0
                             ) {
 
-                                warnSymbol =
-                                    "🌩️";
+                                const warnung =
+                                    daten[0];
 
-                            } else if (
-                                eventName.includes(
-                                    "STURM"
-                                ) ||
-                                eventName.includes(
-                                    "WIND"
-                                ) ||
-                                eventName.includes(
-                                    "BÖEN"
-                                )
-                            ) {
+                                let warnSymbol =
+                                    "⚠️";
 
-                                warnSymbol =
-                                    "💨";
+                                const eventName =
+                                    String(
+                                        warnung.event ||
+                                        ""
+                                    )
+                                        .toUpperCase();
 
-                            } else if (
-                                eventName.includes(
-                                    "REGEN"
-                                )
-                            ) {
+                                if (
+                                    eventName.includes(
+                                        "GEWITTER"
+                                    )
+                                ) {
 
-                                warnSymbol =
-                                    "🌧️";
+                                    warnSymbol =
+                                        "🌩️";
 
-                            } else if (
-                                eventName.includes(
-                                    "SCHNEE"
-                                )
-                            ) {
+                                } else if (
+                                    eventName.includes(
+                                        "STURM"
+                                    ) ||
+                                    eventName.includes(
+                                        "WIND"
+                                    ) ||
+                                    eventName.includes(
+                                        "BÖEN"
+                                    )
+                                ) {
 
-                                warnSymbol =
-                                    "❄️";
+                                    warnSymbol =
+                                        "💨";
 
-                            } else if (
-                                eventName.includes(
-                                    "GLÄTTE"
-                                )
-                            ) {
+                                } else if (
+                                    eventName.includes(
+                                        "REGEN"
+                                    )
+                                ) {
 
-                                warnSymbol =
-                                    "🧊";
+                                    warnSymbol =
+                                        "🌧️";
 
-                            } else if (
-                                eventName.includes(
-                                    "NEBEL"
-                                )
-                            ) {
+                                } else if (
+                                    eventName.includes(
+                                        "SCHNEE"
+                                    )
+                                ) {
 
-                                warnSymbol =
-                                    "🌫️";
+                                    warnSymbol =
+                                        "❄️";
 
-                            } else if (
-                                eventName.includes(
-                                    "HITZE"
-                                )
-                            ) {
+                                } else if (
+                                    eventName.includes(
+                                        "GLÄTTE"
+                                    )
+                                ) {
 
-                                warnSymbol =
-                                    "🌡️";
-                            }
+                                    warnSymbol =
+                                        "🧊";
 
-                            const mittelpunkt =
-                                layer
-                                    .getBounds()
-                                    .getCenter();
+                                } else if (
+                                    eventName.includes(
+                                        "NEBEL"
+                                    )
+                                ) {
 
-                            const symbolIcon =
-                                L.divIcon({
+                                    warnSymbol =
+                                        "🌫️";
 
-                                    className:
-                                        "dwd-warnsymbol",
+                                } else if (
+                                    eventName.includes(
+                                        "HITZE"
+                                    )
+                                ) {
 
-                                    html:
-                                        '<div style="' +
-                                        'font-size:30px;' +
-                                        'line-height:30px;' +
-                                        'text-align:center;' +
-                                        'filter:drop-shadow(' +
-                                        '0 1px 2px ' +
-                                        'rgba(0,0,0,0.7)' +
-                                        ');' +
-                                        '">' +
-                                        warnSymbol +
-                                        '</div>',
-
-                                    iconSize:
-                                        [36, 36],
-
-                                    iconAnchor:
-                                        [18, 18]
-                                });
-
-                            L.marker(
-                                mittelpunkt,
-                                {
-
-                                    icon:
-                                        symbolIcon,
-
-                                    interactive:
-                                        false,
-
-                                    keyboard:
-                                        false
+                                    warnSymbol =
+                                        "🌡️";
                                 }
-                            ).addTo(
-                                karte
-                            );
-                        }
-
-                        // ----------------------------------
-                        // KLICK AUF LANDKREIS
-                        // ----------------------------------
-
-                        layer.on(
-                            "click",
-                            () => {
 
                                 const mittelpunkt =
                                     layer
                                         .getBounds()
                                         .getCenter();
 
-                                if (
-                                    typeof
-                                    window.ladeWetter ===
-                                    "function"
-                                ) {
+                                const symbolIcon =
+                                    L.divIcon({
 
-                                    window.ladeWetter(
-                                        mittelpunkt.lat,
-                                        mittelpunkt.lng,
-                                        landkreis
-                                    );
+                                        className:
+                                            "dwd-warnsymbol",
 
-                                } else {
+                                        html:
+                                            '<div style="' +
+                                            'font-size:30px;' +
+                                            'line-height:30px;' +
+                                            'text-align:center;' +
+                                            'filter:drop-shadow(' +
+                                            '0 1px 2px ' +
+                                            'rgba(0,0,0,0.7)' +
+                                            ');' +
+                                            '">' +
+                                            warnSymbol +
+                                            '</div>',
 
-                                    fetch(
-                                        `/api/wetter?lat=${mittelpunkt.lat}&lon=${mittelpunkt.lng}&landkreis=${encodeURIComponent(landkreis)}`
-                                    )
+                                        iconSize:
+                                            [36, 36],
 
-                                        .then(
-                                            r => r.json()
-                                        )
+                                        iconAnchor:
+                                            [18, 18]
+                                    });
 
-                                        .then(
-                                            wetter => {
+                                L.marker(
+                                    mittelpunkt,
+                                    {
 
-                                                const ort =
-                                                    document.getElementById(
-                                                        "ort"
-                                                    );
+                                        icon:
+                                            symbolIcon,
 
-                                                if (ort) {
+                                        interactive:
+                                            false,
 
-                                                    ort.textContent =
-                                                        wetter.ort;
-                                                }
-
-                                                const temperatur =
-                                                    document.getElementById(
-                                                        "temperatur"
-                                                    );
-
-                                                if (
-                                                    temperatur
-                                                ) {
-
-                                                    temperatur.textContent =
-                                                        wetter.temperatur +
-                                                        " °C";
-                                                }
-
-                                                const wettertext =
-                                                    document.getElementById(
-                                                        "wettertext"
-                                                    );
-
-                                                if (
-                                                    wettertext
-                                                ) {
-
-                                                    wettertext.textContent =
-                                                        wetter.wettertext;
-                                                }
-
-                                                const wind =
-                                                    document.getElementById(
-                                                        "wind"
-                                                    );
-
-                                                if (wind) {
-
-                                                    wind.textContent =
-                                                        wetter.wind +
-                                                        " km/h";
-                                                }
-
-                                                const boeen =
-                                                    document.getElementById(
-                                                        "boeen"
-                                                    );
-
-                                                if (boeen) {
-
-                                                    boeen.textContent =
-                                                        wetter.boeen +
-                                                        " km/h";
-                                                }
-
-                                                const regen =
-                                                    document.getElementById(
-                                                        "regen"
-                                                    );
-
-                                                if (regen) {
-
-                                                    regen.textContent =
-                                                        wetter.regen +
-                                                        " mm";
-                                                }
-
-                                                const luftdruck =
-                                                    document.getElementById(
-                                                        "luftdruck"
-                                                    );
-
-                                                if (
-                                                    luftdruck
-                                                ) {
-
-                                                    luftdruck.textContent =
-                                                        wetter.luftdruck +
-                                                        " hPa";
-                                                }
-
-                                                const luftfeuchte =
-                                                    document.getElementById(
-                                                        "luftfeuchte"
-                                                    );
-
-                                                if (
-                                                    luftfeuchte
-                                                ) {
-
-                                                    luftfeuchte.textContent =
-                                                        wetter.luftfeuchte +
-                                                        " %";
-                                                }
-
-                                                const gefuehlt =
-                                                    document.getElementById(
-                                                        "gefuehlt"
-                                                    );
-
-                                                if (
-                                                    gefuehlt
-                                                ) {
-
-                                                    gefuehlt.textContent =
-                                                        wetter.gefuehlt +
-                                                        " °C";
-                                                }
-                                            }
-                                        )
-
-                                        .catch(
-                                            error =>
-                                                console.error(
-                                                    "Wetter konnte nicht geladen werden:",
-                                                    error
-                                                )
-                                        );
-                                }
-
-                                // --------------------------
-                                // POPUP
-                                // --------------------------
-
-                                let html =
-                                    "<h2 style='margin:0;color:#1565C0'>" +
-                                    landkreis +
-                                    "</h2>" +
-                                    "<hr style='margin:8px 0'>";
-
-                                if (
-                                    daten.length === 0
-                                ) {
-
-                                    html +=
-                                        "✅ Keine Warnungen";
-
-                                } else {
-
-                                    daten.forEach(
-                                        w => {
-
-                                            let warnstufe =
-                                                "<span style='color:#FFD600;font-weight:bold'>🟡 Gelb</span>";
-
-                                            if (
-                                                String(
-                                                    w.event || ""
-                                                )
-                                                    .toUpperCase()
-                                                    .startsWith(
-                                                        "VORABINFORMATION"
-                                                    )
-                                            ) {
-
-                                                warnstufe =
-                                                    "<span style='color:#FF9800;font-weight:bold'>🟠 Vorabinformation</span>";
-
-                                            } else if (
-                                                Number(
-                                                    w.type
-                                                ) === 8
-                                            ) {
-
-                                                warnstufe =
-                                                    "<span style='color:#C8A2FF;font-weight:bold'>🟣 Hitzewarnung</span>";
-
-                                            } else if (
-                                                Number(
-                                                    w.level
-                                                ) === 3
-                                            ) {
-
-                                                warnstufe =
-                                                    "<span style='color:#FF9800;font-weight:bold'>🟠 Orange</span>";
-
-                                            } else if (
-                                                Number(
-                                                    w.level
-                                                ) === 4
-                                            ) {
-
-                                                warnstufe =
-                                                    "<span style='color:#E53935;font-weight:bold'>🔴 Rot</span>";
-
-                                            } else if (
-                                                Number(
-                                                    w.level
-                                                ) >= 5
-                                            ) {
-
-                                                warnstufe =
-                                                    "<span style='color:#8E24AA;font-weight:bold'>🟣 Violett</span>";
-                                            }
-
-                                            let gueltigBis =
-                                                "";
-
-                                            if (w.end) {
-
-                                                gueltigBis =
-                                                    "<b>🕒 Gültig bis:</b> " +
-                                                    new Date(
-                                                        w.end
-                                                    )
-                                                        .toLocaleString(
-                                                            "de-DE",
-                                                            {
-                                                                day:
-                                                                    "2-digit",
-
-                                                                month:
-                                                                    "2-digit",
-
-                                                                year:
-                                                                    "numeric",
-
-                                                                hour:
-                                                                    "2-digit",
-
-                                                                minute:
-                                                                    "2-digit"
-                                                            }
-                                                        );
-                                            }
-
-                                            html +=
-                                                "<div style='margin-bottom:12px'>" +
-                                                "<span style='font-size:22px'>⚠️</span> " +
-                                                "<b style='color:#d32f2f'>" +
-                                                (
-                                                    w.event ||
-                                                    "DWD-Warnung"
-                                                ) +
-                                                "</b><br>" +
-                                                "<span style='font-size:14px'>" +
-                                                (
-                                                    w.headline ||
-                                                    ""
-                                                ) +
-                                                "</span><br>" +
-                                                "<small>" +
-                                                warnstufe +
-                                                "<br>" +
-                                                gueltigBis +
-                                                "</small>" +
-                                                "</div>";
-                                        }
-                                    );
-                                }
-
-                                layer
-                                    .bindPopup(
-                                        html
-                                    )
-                                    .openPopup();
+                                        keyboard:
+                                            false
+                                    }
+                                ).addTo(
+                                    karte
+                                );
                             }
-                        );
-                    }
+
+                            // ----------------------------------
+                            // KLICK AUF LANDKREIS
+                            // ----------------------------------
+
+                            layer.on(
+                                "click",
+                                () => {
+
+                                    const mittelpunkt =
+                                        layer
+                                            .getBounds()
+                                            .getCenter();
+
+                                    if (
+                                        typeof
+                                        window.ladeWetter ===
+                                        "function"
+                                    ) {
+
+                                        window.ladeWetter(
+                                            mittelpunkt.lat,
+                                            mittelpunkt.lng,
+                                            landkreis
+                                        );
+
+                                    } else {
+
+                                        fetch(
+                                            `/api/wetter?lat=${mittelpunkt.lat}&lon=${mittelpunkt.lng}&landkreis=${encodeURIComponent(landkreis)}`
+                                        )
+                                            .then(
+                                                r =>
+                                                    r.json()
+                                            )
+                                            .then(
+                                                wetter => {
+
+                                                    const ort =
+                                                        document.getElementById(
+                                                            "ort"
+                                                        );
+
+                                                    if (
+                                                        ort
+                                                    ) {
+
+                                                        ort.textContent =
+                                                            wetter.ort;
+                                                    }
+
+                                                    const temperatur =
+                                                        document.getElementById(
+                                                            "temperatur"
+                                                        );
+
+                                                    if (
+                                                        temperatur
+                                                    ) {
+
+                                                        temperatur.textContent =
+                                                            wetter.temperatur +
+                                                            " °C";
+                                                    }
+
+                                                    const wettertext =
+                                                        document.getElementById(
+                                                            "wettertext"
+                                                        );
+
+                                                    if (
+                                                        wettertext
+                                                    ) {
+
+                                                        wettertext.textContent =
+                                                            wetter.wettertext;
+                                                    }
+
+                                                    const wind =
+                                                        document.getElementById(
+                                                            "wind"
+                                                        );
+
+                                                    if (
+                                                        wind
+                                                    ) {
+
+                                                        wind.textContent =
+                                                            wetter.wind +
+                                                            " km/h";
+                                                    }
+
+                                                    const boeen =
+                                                        document.getElementById(
+                                                            "boeen"
+                                                        );
+
+                                                    if (
+                                                        boeen
+                                                    ) {
+
+                                                        boeen.textContent =
+                                                            wetter.boeen +
+                                                            " km/h";
+                                                    }
+
+                                                    const regen =
+                                                        document.getElementById(
+                                                            "regen"
+                                                        );
+
+                                                    if (
+                                                        regen
+                                                    ) {
+
+                                                        regen.textContent =
+                                                            wetter.regen +
+                                                            " mm";
+                                                    }
+
+                                                    const luftdruck =
+                                                        document.getElementById(
+                                                            "luftdruck"
+                                                        );
+
+                                                    if (
+                                                        luftdruck
+                                                    ) {
+
+                                                        luftdruck.textContent =
+                                                            wetter.luftdruck +
+                                                            " hPa";
+                                                    }
+
+                                                    const luftfeuchte =
+                                                        document.getElementById(
+                                                            "luftfeuchte"
+                                                        );
+
+                                                    if (
+                                                        luftfeuchte
+                                                    ) {
+
+                                                        luftfeuchte.textContent =
+                                                            wetter.luftfeuchte +
+                                                            " %";
+                                                    }
+
+                                                    const gefuehlt =
+                                                        document.getElementById(
+                                                            "gefuehlt"
+                                                        );
+
+                                                    if (
+                                                        gefuehlt
+                                                    ) {
+
+                                                        gefuehlt.textContent =
+                                                            wetter.gefuehlt +
+                                                            " °C";
+                                                    }
+                                                }
+                                            )
+                                            .catch(
+                                                error =>
+                                                    console.error(
+                                                        "Wetter konnte nicht geladen werden:",
+                                                        error
+                                                    )
+                                            );
+                                    }
+
+                                    // --------------------------
+                                    // POPUP
+                                    // --------------------------
+
+                                    let html =
+                                        "<h2 style='margin:0;color:#1565C0'>" +
+                                        landkreis +
+                                        "</h2>" +
+                                        "<hr style='margin:8px 0'>";
+
+                                    if (
+                                        daten.length === 0
+                                    ) {
+
+                                        html +=
+                                            "✅ Keine Warnungen";
+
+                                    } else {
+
+                                        daten.forEach(
+                                            w => {
+
+                                                let warnstufe =
+                                                    "<span style='color:#FFD600;font-weight:bold'>🟡 Gelb</span>";
+
+                                                if (
+                                                    String(
+                                                        w.event ||
+                                                        ""
+                                                    )
+                                                        .toUpperCase()
+                                                        .startsWith(
+                                                            "VORABINFORMATION"
+                                                        )
+                                                ) {
+
+                                                    warnstufe =
+                                                        "<span style='color:#FF9800;font-weight:bold'>🟠 Vorabinformation</span>";
+
+                                                } else if (
+                                                    Number(
+                                                        w.type
+                                                    ) === 8
+                                                ) {
+
+                                                    warnstufe =
+                                                        "<span style='color:#C8A2FF;font-weight:bold'>🟣 Hitzewarnung</span>";
+
+                                                } else if (
+                                                    Number(
+                                                        w.level
+                                                    ) === 3
+                                                ) {
+
+                                                    warnstufe =
+                                                        "<span style='color:#FF9800;font-weight:bold'>🟠 Orange</span>";
+
+                                                } else if (
+                                                    Number(
+                                                        w.level
+                                                    ) === 4
+                                                ) {
+
+                                                    warnstufe =
+                                                        "<span style='color:#E53935;font-weight:bold'>🔴 Rot</span>";
+
+                                                } else if (
+                                                    Number(
+                                                        w.level
+                                                    ) >= 5
+                                                ) {
+
+                                                    warnstufe =
+                                                        "<span style='color:#8E24AA;font-weight:bold'>🟣 Violett</span>";
+                                                }
+
+                                                let gueltigBis =
+                                                    "";
+
+                                                if (
+                                                    w.end
+                                                ) {
+
+                                                    gueltigBis =
+                                                        "<b>🕒 Gültig bis:</b> " +
+                                                        new Date(
+                                                            w.end
+                                                        )
+                                                            .toLocaleString(
+                                                                "de-DE",
+                                                                {
+                                                                    day:
+                                                                        "2-digit",
+
+                                                                    month:
+                                                                        "2-digit",
+
+                                                                    year:
+                                                                        "numeric",
+
+                                                                    hour:
+                                                                        "2-digit",
+
+                                                                    minute:
+                                                                        "2-digit"
+                                                                }
+                                                            );
+                                                }
+
+                                                html +=
+                                                    "<div style='margin-bottom:12px'>" +
+                                                    "<span style='font-size:22px'>⚠️</span> " +
+                                                    "<b style='color:#d32f2f'>" +
+                                                    (
+                                                        w.event ||
+                                                        "DWD-Warnung"
+                                                    ) +
+                                                    "</b><br>" +
+                                                    "<span style='font-size:14px'>" +
+                                                    (
+                                                        w.headline ||
+                                                        ""
+                                                    ) +
+                                                    "</span><br>" +
+                                                    "<small>" +
+                                                    warnstufe +
+                                                    "<br>" +
+                                                    gueltigBis +
+                                                    "</small>" +
+                                                    "</div>";
+                                            }
+                                        );
+                                    }
+
+                                    layer
+                                        .bindPopup(
+                                            html
+                                        )
+                                        .openPopup();
+                                }
+                            );
+                        }
                 }
-            ).addTo(karte);
+            )
+            .addTo(karte);
 
-            window.warnkarte =
-                warnLayer;
+        window.warnkarte =
+            warnLayer;
 
-            console.log(
-                "WARNKARTE FERTIG:",
-                warnLayer
-            );
-
-            setTimeout(
-                () => {
-                    karte.invalidateSize();
-                },
-                300
-            );
-        })
-
-        .catch(
-            error => {
-
-                console.error(
-                    "Warnkarte konnte nicht geladen werden:",
-                    error
-                );
-            }
+        console.log(
+            "WARNKARTE FERTIG:",
+            warnLayer
         );
+
+        setTimeout(
+            () => {
+                karte.invalidateSize();
+            },
+            300
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Warnkarte konnte nicht geladen werden:",
+            error
+        );
+    }
 });
