@@ -93,31 +93,66 @@ if (ersteWarnGruppe) {
 
         const name = feature.properties.DWD_NAME;
 
-        const passendeWarnung = Object.values(warnungen.warnings)
-    .flat()
-    .find(w => {
-if (
-    w.regionName.includes("Traun") ||
-    w.regionName.includes("Berchtes") ||
-    w.regionName.includes("Rosenheim") ||
-    w.regionName.includes("Mühldorf")
-)
-    console.log("Traunstein:", w);
-        const dwdName = mapping[w.regionName] ?? mapping["Landkreis " + w.regionName];
+        const alleWarnungen = Object.values(warnungen.warnings || {}).flat()
+            .concat(Object.values(warnungen.vorabInformation || {}).flat());
 
-if (dwdName === name) {
-    console.log("TREFFER:", name, w.level, w.event);
-}
+        const normalisiereName = n => String(n || "")
+            .replace(/^(Landkreis|Kreis|Stadt|LK)\s+/i, "")
+            .replace(/\s+/g, " ")
+            .trim()
+            .toUpperCase();
 
-return dwdName === name ||
-       gehoertZurWarnung(w.regionName, name);
-    });
+        const warnungenLandkreis = alleWarnungen.filter(w => {
+            const ziel = normalisiereName(name);
+            const region = normalisiereName(w.regionName);
+            const dwdName = normalisiereName(
+                mapping[w.regionName] ??
+                mapping["Landkreis " + w.regionName] ??
+                w.regionName
+            );
 
-const alleWarnungen = Object.values(warnungen.warnings || {}).flat().concat(Object.values(warnungen.vorabInformation || {}).flat()); const normalisiereName = n => String(n || "").replace(/^(Landkreis|Kreis|Stadt|LK)\s+/i, "").replace(/\s+/g, " ").trim().toUpperCase(); const warnungenLandkreis = alleWarnungen.filter(w => { const region = normalisiereName(w.regionName); const dwdName = normalisiereName(mapping[w.regionName] ?? mapping["Landkreis " + w.regionName] ?? w.regionName); return dwdName === normalisiereName(name) ||
-       region === normalisiereName(name) ||
-       region === normalisiereName(name).replace(/^LANDKREIS\s+/, "") ||
-       dwdName === normalisiereName(name).replace(/^LANDKREIS\s+/, "") ||
-       gehoertZurWarnung(w.regionName, name); }); const hatVorab = warnungenLandkreis.some(w => w.event && w.event.toUpperCase().startsWith("VORABINFORMATION"));const hatHitze = warnungenLandkreis.some(w => w.type === 8); let maxLevel = 0; warnungenLandkreis.forEach(w => { if (w.type !== 8) maxLevel = Math.max(maxLevel, w.level); }); let farbe = "#8BC34A"; let opacity = 0.55; if (hatVorab) { farbe = "#FF9800"; opacity = 0.35; } else if (hatHitze) { farbe = "#C8A2FF"; opacity = 0.60; } else if (maxLevel === 2) { farbe = "#FFD600"; opacity = 0.55; } else if (maxLevel === 3) { farbe = "#FF9800"; opacity = 0.60; } else if (maxLevel === 4) { farbe = "#E53935"; opacity = 0.65; } else if (maxLevel >= 5) { farbe = "#8E24AA"; opacity = 0.70; }
+            return region === ziel ||
+                   dwdName === ziel ||
+                   gehoertZurWarnung(w.regionName, name);
+        });
+
+        const hatVorab = warnungenLandkreis.some(w =>
+            w.event &&
+            w.event.toUpperCase().startsWith("VORABINFORMATION")
+        );
+
+        const hatHitze = warnungenLandkreis.some(w => w.type === 8);
+
+        let maxLevel = 0;
+
+        warnungenLandkreis.forEach(w => {
+            if (w.type !== 8) {
+                maxLevel = Math.max(maxLevel, w.level);
+            }
+        });
+
+        let farbe = "#8BC34A";
+        let opacity = 0.55;
+
+        if (hatVorab) {
+            farbe = "#FF9800";
+            opacity = 0.35;
+        } else if (hatHitze) {
+            farbe = "#C8A2FF";
+            opacity = 0.60;
+        } else if (maxLevel === 2) {
+            farbe = "#FFD600";
+            opacity = 0.55;
+        } else if (maxLevel === 3) {
+            farbe = "#FF9800";
+            opacity = 0.60;
+        } else if (maxLevel === 4) {
+            farbe = "#E53935";
+            opacity = 0.65;
+        } else if (maxLevel >= 5) {
+            farbe = "#8E24AA";
+            opacity = 0.70;
+        }
 return {
             color: "#666",
             weight: 1,
@@ -433,7 +468,4 @@ return {
         });
 
 });
-
-
-
 
