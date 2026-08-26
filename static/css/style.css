@@ -646,3 +646,14 @@ margin: 0 auto;
 .dwd-legende .violett {
     background: #8e24aa;
 }
+/* Deutschlandkarte bündig zum übrigen Layout */
+#deutschlandkarte-section {
+    padding: 0;
+    background: transparent;
+    margin-top: 25px;
+}
+#deutschlandkarte-section .card {
+    width: 100%;
+    box-sizing: border-box;
+}
+

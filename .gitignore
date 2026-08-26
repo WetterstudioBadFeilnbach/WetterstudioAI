@@ -1,0 +1,9 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Virtuelle Umgebung
+.venv/
+
+# Lokale Test- und temporäre Dateien
+*.tmp
