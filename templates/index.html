@@ -270,57 +270,57 @@
 
     <div class="card">
         <h2>⚠ Warnungen</h2>
-        <h3 id="warnungen-gesamt">0</h3>
+        <h3>0</h3>
     </div>
 
     <div class="card">
         <h2>🟡 Gelbe Warnungen</h2>
-        <h3 id="warnungen-gelb">0</h3>
+        <h3>0</h3>
     </div>
 
     <div class="card">
         <h2>🟠 Orange Warnungen</h2>
-        <h3 id="warnungen-orange">0</h3>
+        <h3>0</h3>
     </div>
 
     <div class="card">
         <h2>🔴 Rote Warnungen</h2>
-        <h3 id="warnungen-rot">0</h3>
+        <h3>0</h3>
     </div>
 
     <div class="card">
         <h2>🟣 Violette Warnungen</h2>
-        <h3 id="warnungen-violett">0</h3>
+        <h3>0</h3>
     </div>
 
     <div class="card">
         <h2>🌩 Gewitter</h2>
-        <h3 id="warnungen-gewitter">0</h3>
+        <h3>0</h3>
     </div>
 
     <div class="card">
         <h2>🌪 Tornados</h2>
-        <h3 id="warnungen-tornado">0</h3>
+        <h3>0</h3>
     </div>
 
     <div class="card">
         <h2>🌨 Schnee</h2>
-        <h3 id="warnungen-schnee">0</h3>
+        <h3>0</h3>
     </div>
 
     <div class="card">
         <h2>🌡 Hitze</h2>
-        <h3 id="warnungen-hitze">0</h3>
+        <h3>0</h3>
     </div>
 
     <div class="card">
         <h2>💨 Sturm</h2>
-        <h3 id="warnungen-sturm">0</h3>
+        <h3>0</h3>
     </div>
 
     <div class="card">
         <h2>🌧 Starkregen</h2>
-        <h3 id="warnungen-starkregen">0</h3>
+        <h3>0</h3>
     </div>
 
 </section>
@@ -1747,170 +1747,6 @@ document.addEventListener(
     }
 );
 
-</script>
-
-
-<script>
-(function () {
-    "use strict";
-
-    function setze(id, wert) {
-        const el = document.getElementById(id);
-        if (el) el.textContent = String(wert);
-    }
-
-    function textVon(w) {
-        return [
-            w.event,
-            w.headline,
-            w.description,
-            w.instruction
-        ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-    }
-
-    function stufe(w) {
-        const raw = String(
-            w.level ??
-            w.warnstufe ??
-            w.severity ??
-            w.severityLevel ??
-            ""
-        ).toLowerCase();
-
-        if (
-            raw === "4" ||
-            raw.includes("violett") ||
-            raw.includes("extrem") ||
-            raw.includes("purple")
-        ) return "violett";
-
-        if (
-            raw === "3" ||
-            raw.includes("rot")
-        ) return "rot";
-
-        if (
-            raw === "2" ||
-            raw.includes("orange")
-        ) return "orange";
-
-        return "gelb";
-    }
-
-    async function aktualisiereWarnkacheln() {
-        try {
-            const antwort = await fetch(
-                "/api/warnungen",
-                { cache: "no-store" }
-            );
-
-            if (!antwort.ok) {
-                throw new Error(
-                    "HTTP " + antwort.status
-                );
-            }
-
-            const daten = await antwort.json();
-
-            const warnungen = Object.values(daten || {})
-                .flat()
-                .filter(Boolean);
-
-            const s = {
-                gesamt: warnungen.length,
-                gelb: 0,
-                orange: 0,
-                rot: 0,
-                violett: 0,
-                gewitter: 0,
-                tornado: 0,
-                schnee: 0,
-                hitze: 0,
-                sturm: 0,
-                starkregen: 0
-            };
-
-            warnungen.forEach(w => {
-                s[stufe(w)]++;
-
-                const t = textVon(w);
-
-                if (
-                    t.includes("gewitter") ||
-                    t.includes("blitz")
-                ) s.gewitter++;
-
-                if (
-                    t.includes("tornado") ||
-                    t.includes("windhose")
-                ) s.tornado++;
-
-                if (
-                    t.includes("schnee") ||
-                    t.includes("schneefall") ||
-                    t.includes("glätte") ||
-                    t.includes("frost")
-                ) s.schnee++;
-
-                if (t.includes("hitze")) {
-                    s.hitze++;
-                }
-
-                if (
-                    t.includes("starkregen") ||
-                    t.includes("dauerregen")
-                ) {
-                    s.starkregen++;
-                }
-
-                if (
-                    t.includes("sturm") ||
-                    t.includes("wind") ||
-                    t.includes("böen") ||
-                    t.includes("boeen")
-                ) {
-                    s.sturm++;
-                }
-            });
-
-            setze("warnungen-gesamt", s.gesamt);
-            setze("warnungen-gelb", s.gelb);
-            setze("warnungen-orange", s.orange);
-            setze("warnungen-rot", s.rot);
-            setze("warnungen-violett", s.violett);
-            setze("warnungen-gewitter", s.gewitter);
-            setze("warnungen-tornado", s.tornado);
-            setze("warnungen-schnee", s.schnee);
-            setze("warnungen-hitze", s.hitze);
-            setze("warnungen-sturm", s.sturm);
-            setze("warnungen-starkregen", s.starkregen);
-
-            console.log(
-                "Warn-Kacheln aktualisiert:",
-                s
-            );
-
-        } catch (err) {
-            console.error(
-                "Warn-Kacheln Fehler:",
-                err
-            );
-        }
-    }
-
-    document.addEventListener(
-        "DOMContentLoaded",
-        aktualisiereWarnkacheln
-    );
-
-    setInterval(
-        aktualisiereWarnkacheln,
-        120000
-    );
-})();
 </script>
 
 <script src="/static/js/app_v10.js?v=20260825"></script>
