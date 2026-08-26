@@ -60,7 +60,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         const antwort =
             await fetch(
-                "/api/dwd-warnungen"
+                "/api/warnungen"
             );
 
         const warnungen =
@@ -234,16 +234,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         // ALLE WARNUNGEN ZUSAMMENFÜHREN
         // --------------------------------------------------
 
-        const alleWarnungen = [
-
-            ...Object.values(
-                warnungen.warnings || {}
-            ).flat(),
-
-            ...Object.values(
-                warnungen.vorabInformation || {}
-            ).flat()
-        ];
+        const alleWarnungen =
+            Object.values(
+                warnungen || {}
+            ).flat();
 
         console.log(
             "DWD-Warnungen geladen:",
@@ -1025,5 +1019,6 @@ const warnungenFuerFeature =
         );
     }
 });
+
 
 
