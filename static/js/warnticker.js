@@ -3,6 +3,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const ticker = document.getElementById("warnTicker");
     const infoTicker = document.getElementById("infoTicker");
 
+    // Merkt sich die zuletzt angesagte DWD-Warnung.
+    // Dadurch wird dieselbe Warnung nicht alle 2 Minuten erneut angesagt.
+    let zuletztAngesagteWarnung = null;
+
     if (!ticker) return;
 
     function ladeWarnticker() {
@@ -63,18 +67,31 @@ if (
                             })
                         );
 
-                       if (
-    neuesteWarnung &&
-    neuesteWarnung.warnung === w
-) {
-    infos.push(
-        "🚨 Neue " +
-        w.event +
-        " für " +
-        landkreis +
-        ". Bitte die Wetterentwicklung verfolgen."
-    );
-}
+                        if (
+                            neuesteWarnung &&
+                            neuesteWarnung.warnung === w
+                        ) {
+                            const warnungsId =
+                                landkreis + "|" +
+                                w.event + "|" +
+                                w.start + "|" +
+                                w.end;
+
+                            if (
+                                warnungsId !== zuletztAngesagteWarnung
+                            ) {
+                                zuletztAngesagteWarnung =
+                                    warnungsId;
+
+                                infos.push(
+                                    "🚨 Neue " +
+                                    w.event +
+                                    " für " +
+                                    landkreis +
+                                    ". Bitte die Wetterentwicklung verfolgen."
+                                );
+                            }
+                        }
 
                     });
 
@@ -143,3 +160,6 @@ if (
     setInterval(ladeWarnticker, 120000);
 
 });
+
+
+
