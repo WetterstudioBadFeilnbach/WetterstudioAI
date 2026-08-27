@@ -20,9 +20,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     // SVG-PATTERN FÜR VORABINFORMATIONEN
     // --------------------------------------------------
 
-    const svgRenderer = L.svg();
+    const warnPane = "warnPane";
 
-    svgRenderer.addTo(karte);
+if (!karte.getPane(warnPane)) {
+    karte.createPane(warnPane);
+}
+
+karte.getPane(warnPane).style.zIndex = "450";
+karte.getPane(warnPane).style.pointerEvents = "auto";
+
+const svgRenderer = L.svg({
+    pane: warnPane
+});
 
     const svgRoot =
         svgRenderer._container;
@@ -352,8 +361,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 data,
                 {
 
-                    renderer:
-                        svgRenderer,
+                    renderer: svgRenderer, interactive: true,
 
                     // --------------------------------------
                     // FARBEN
@@ -422,8 +430,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                             let fillColor =
                                 "#8BC34A";
 
-                            let fillOpacity =
-                                0.55;
+                            let fillOpacity = 0.55;
 
                             if (
                                 hatVorab
@@ -646,12 +653,25 @@ document.addEventListener("DOMContentLoaded", async () => {
                             }
 
                             // ----------------------------------
+                            // Direktes Popup an die Warnfläche binden
+                            // ----------------------------------
+
+                            if (daten.length > 0) {
+                                const popupText = daten.map(w => `<div style="margin-bottom:10px"><strong>${w.symbol || "⚠️"} ${w.headline || w.event || "Warnung"}</strong><br>${w.description || w.instruction || w.text || ""}</div>`).join("<hr>");
+                                layer.bindPopup(`<div style="min-width:280px;max-width:420px"><strong>${landkreis}</strong><hr>${popupText}</div>`, { maxWidth: 420, autoPan: true });
+                            }
+
+                            // ----------------------------------
                             // KLICK AUF LANDKREIS
                             // ----------------------------------
 
                             layer.on(
                                 "click",
-                                () => {
+                                (e) => { console.log(">>> WARNFLAECHE WURDE GEKLICKT <<<", landkreis, daten);
+                                    // Warn-Popup direkt auf der geklickten Fläche öffnen.
+                                    if (daten.length > 0) {
+                                        layer.openPopup(e.latlng || layer.getBounds().getCenter());
+                                    }
 
                                     const mittelpunkt =
                                         layer
@@ -962,8 +982,16 @@ document.addEventListener("DOMContentLoaded", async () => {
             )
             .addTo(karte);
 
+        // GLOBALER KLICKTEST DIREKT AUF DER KARTE
+        karte.on("click", function(e) {
+            console.log(">>> KARTE GEKLICKT <<<", e.latlng);
+        });
+
         window.warnkarte =
             warnLayer;
+
+        // Warnfläche über andere Kartenebenen legen.
+        warnLayer.bringToFront();
 
         console.log(
             "WARNKARTE FERTIG:",
@@ -985,3 +1013,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         );
     }
 });
+
+
+
+
+
+
+
+
+
+
+
