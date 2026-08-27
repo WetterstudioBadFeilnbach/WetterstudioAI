@@ -9,11 +9,15 @@ _LETZTE_GUELTIGE_DATEN = None
 _NAECHSTER_OPENMETEO_VERSUCH = 0
 
 
-def wettertext(code):
+def wettertext(code, is_day=1):
     if code == 0:
-        return "☀️ Sonnig"
+        if is_day:
+            return "☀️ Sonnig"
+        return "🌙 Klar"
     elif code in [1, 2]:
-        return "🌤️ Heiter"
+        if is_day:
+            return "🌤️ Heiter"
+        return "🌙 Leicht bewölkt"
     elif code == 3:
         return "☁️ Bewölkt"
     elif code in [45, 48]:
@@ -81,7 +85,7 @@ def aktuelle_wetterdaten(lat=48.0, lon=11.8):
         "&current=temperature_2m,apparent_temperature,"
         "relative_humidity_2m,precipitation,"
         "wind_speed_10m,wind_gusts_10m,"
-        "surface_pressure,weather_code"
+        "surface_pressure,weather_code,is_day"
         "&daily=weather_code,"
         "temperature_2m_max,"
         "temperature_2m_min,"
@@ -216,7 +220,8 @@ def aktuelle_wetterdaten(lat=48.0, lon=11.8):
                 1
             ),
             "weather_code": code,
-            "wettertext": wettertext(code),
+            "is_day": current.get("is_day", 1),
+            "wettertext": wettertext(code, current.get("is_day", 1)),
             "daily": daily,
         }
 
@@ -262,6 +267,13 @@ def aktuelle_wetterdaten(lat=48.0, lon=11.8):
             "wettertext": "Wetterdaten vorübergehend nicht verfügbar",
             "daily": {},
         }
+
+
+
+
+
+
+
 
 
 
