@@ -1,279 +1,182 @@
 import requests
-import time
-
-
-_WETTER_CACHE = {}
-_CACHE_SEKUNDEN = 1800
-
-_LETZTE_GUELTIGE_DATEN = None
-_NAECHSTER_OPENMETEO_VERSUCH = 0
 
 
 def wettertext(code, is_day=1):
+
     if code == 0:
-        if is_day:
-            return "☀️ Sonnig"
-        return "🌙 Klar"
+        return "☀️ Sonnig" if is_day else "🌙 Klar"
+
     elif code in [1, 2]:
-        if is_day:
-            return "🌤️ Heiter"
-        return "🌙 Leicht bewölkt"
+        return "🌤️ Heiter" if is_day else "🌙 Leicht bewölkt"
+
     elif code == 3:
         return "☁️ Bewölkt"
+
     elif code in [45, 48]:
         return "🌫️ Nebel"
+
     elif code in [51, 53, 55, 56, 57]:
         return "🌦️ Nieselregen"
+
     elif code in [61, 63, 65, 66, 67]:
         return "🌧️ Regen"
+
     elif code in [71, 73, 75, 77]:
         return "❄️ Schnee"
+
     elif code in [80, 81, 82]:
         return "🌦️ Regenschauer"
+
     elif code in [95, 96, 99]:
         return "⛈️ Gewitter"
-    else:
-        return "❔ Unbekannt"
+
+    return "❔ Unbekannt"
 
 
-def aktuelle_wetterdaten(lat=48.0, lon=11.8):
+def tagesvorhersage_mit_wettermodell(
+    ziel_datum,
+    lat,
+    lon,
+    modell="best_match"
+):
 
-    global _LETZTE_GUELTIGE_DATEN
-    global _NAECHSTER_OPENMETEO_VERSUCH
-
-    cache_key = (
-        round(lat, 4),
-        round(lon, 4)
+    print(
+        "OPENMETEO-MODELL:",
+        modell
     )
-
-    jetzt = time.time()
-
-    cached = _WETTER_CACHE.get(cache_key)
-
-    if cached:
-        alter = jetzt - cached["zeit"]
-
-        if alter < _CACHE_SEKUNDEN:
-            return cached["daten"]
-
-    if jetzt < _NAECHSTER_OPENMETEO_VERSUCH:
-
-        if cached:
-            return cached["daten"]
-
-        if _LETZTE_GUELTIGE_DATEN:
-            return _LETZTE_GUELTIGE_DATEN.copy()
-
-        return {
-            "ort": "Unbekannt",
-            "temperatur": 0.0,
-            "gefuehlt": 0.0,
-            "luftfeuchte": 0,
-            "wind": 0.0,
-            "boeen": 0.0,
-            "regen": 0.0,
-            "luftdruck": 0.0,
-            "weather_code": -1,
-            "wettertext": "Wetterdaten vorübergehend nicht verfügbar",
-            "daily": {},
-        }
 
     url = (
         "https://api.open-meteo.com/v1/forecast"
         f"?latitude={lat}"
         f"&longitude={lon}"
-        "&current=temperature_2m,apparent_temperature,"
-        "relative_humidity_2m,precipitation,"
-        "wind_speed_10m,wind_gusts_10m,"
-        "surface_pressure,weather_code,is_day"
         "&daily=weather_code,"
         "temperature_2m_max,"
         "temperature_2m_min,"
         "precipitation_probability_max"
-        "&forecast_days=7"
+        f"&models={modell}"
+        "&forecast_days=10"
         "&timezone=Europe%2FBerlin"
     )
 
     print(
-        "OPENMETEO-TEST: Anfrage wird gestartet:",
+        "OPENMETEO-MODELL-ANFRAGE:",
         url,
         flush=True
     )
 
-    try:
-
-        antwort = requests.get(
-            url,
-            timeout=30,
-            headers={
-                "User-Agent": "Wetterstudio-Bad-Feilnbach-AI"
-            }
-        )
-
-        if antwort.status_code == 429:
-            print(
-                "OPENMETEO-FEHLER: HTTP 429 Too Many Requests - Pause für 30 Minuten",
-                flush=True
-            )
-
-            _NAECHSTER_OPENMETEO_VERSUCH = (
-                time.time() + 1800
-            )
-
-            print(
-                "OPENMETEO-FEHLER: HTTP 429 Too Many Requests",
-                flush=True
-            )
-
-            # 429-Sperre läuft bereits 30 Minuten
-
-            if cached:
-                return cached["daten"]
-
-            if _LETZTE_GUELTIGE_DATEN:
-                return _LETZTE_GUELTIGE_DATEN.copy()
-
-            return {
-                "ort": "Unbekannt",
-                "temperatur": 0.0,
-                "gefuehlt": 0.0,
-                "luftfeuchte": 0,
-                "wind": 0.0,
-                "boeen": 0.0,
-                "regen": 0.0,
-                "luftdruck": 0.0,
-                "weather_code": -1,
-                "wettertext": "Wetterdaten vorübergehend nicht verfügbar",
-                "daily": {},
-            }
-
-        if antwort.status_code != 200:
-            print(
-                "OPENMETEO-ANTWORT-STATUS:",
-                antwort.status_code,
-                flush=True
-            )
-            print(
-                "OPENMETEO-ANTWORT-TEXT:",
-                antwort.text[:1000],
-                flush=True
-            )
-
-        antwort.raise_for_status()
-
-        daten = antwort.json()
-
-        current = daten.get("current", {})
-        daily = daten.get("daily", {})
-
-        code = current.get(
-            "weather_code",
-            -1
-        )
-
-        ergebnis = {
-            "ort": "Unbekannt",
-            "temperatur": round(
-                current.get(
-                    "temperature_2m",
-                    0
-                ),
-                1
-            ),
-            "gefuehlt": round(
-                current.get(
-                    "apparent_temperature",
-                    0
-                ),
-                1
-            ),
-            "luftfeuchte": current.get(
-                "relative_humidity_2m",
-                0
-            ),
-            "wind": round(
-                current.get(
-                    "wind_speed_10m",
-                    0
-                ),
-                1
-            ),
-            "boeen": round(
-                current.get(
-                    "wind_gusts_10m",
-                    0
-                ),
-                1
-            ),
-            "regen": round(
-                current.get(
-                    "precipitation",
-                    0
-                ),
-                1
-            ),
-            "luftdruck": round(
-                current.get(
-                    "surface_pressure",
-                    0
-                ),
-                1
-            ),
-            "weather_code": code,
-            "is_day": current.get("is_day", 1),
-            "wettertext": wettertext(code, current.get("is_day", 1)),
-            "daily": daily,
+    antwort = requests.get(
+        url,
+        timeout=30,
+        headers={
+            "User-Agent": "Wetterstudio-Bad-Feilnbach-AI"
         }
+    )
 
-        _WETTER_CACHE[cache_key] = {
-            "zeit": time.time(),
-            "daten": ergebnis,
-        }
+    antwort.raise_for_status()
 
-        _LETZTE_GUELTIGE_DATEN = ergebnis.copy()
+    daten = antwort.json()
 
-        _NAECHSTER_OPENMETEO_VERSUCH = 0
+    daily = daten.get(
+        "daily",
+        {}
+    )
 
-        return ergebnis
+    tage = daily.get(
+        "time",
+        []
+    )
 
-    except Exception as e:
+    if ziel_datum not in tage:
 
-        print(
-            "OPENMETEO-FEHLER:",
-            repr(e),
-            flush=True
+        raise ValueError(
+            f"Datum nicht in der Vorhersage verfügbar: {ziel_datum}"
         )
 
-        _NAECHSTER_OPENMETEO_VERSUCH = (
-            time.time() + 60
-        )
+    index = tage.index(
+        ziel_datum
+    )
 
-        if cached:
-            return cached["daten"]
+    temperatur_min = daily[
+        "temperature_2m_min"
+    ][index]
 
-        if _LETZTE_GUELTIGE_DATEN:
-            return _LETZTE_GUELTIGE_DATEN.copy()
+    temperatur_max = daily[
+        "temperature_2m_max"
+    ][index]
 
-        return {
-            "ort": "Unbekannt",
-            "temperatur": 0.0,
-            "gefuehlt": 0.0,
-            "luftfeuchte": 0,
-            "wind": 0.0,
-            "boeen": 0.0,
-            "regen": 0.0,
-            "luftdruck": 0.0,
-            "weather_code": -1,
-            "wettertext": "Wetterdaten vorübergehend nicht verfügbar",
-            "daily": {},
+    weather_code = daily[
+        "weather_code"
+    ][index]
+
+    niederschlag = daily.get(
+        "precipitation_probability_max",
+        []
+    )
+
+    niederschlag_wahrscheinlichkeit = (
+        niederschlag[index]
+        if index < len(niederschlag)
+        else None
+    )
+
+    return {
+        "datum": ziel_datum,
+        "temperatur_min": round(
+            temperatur_min,
+            1
+        ),
+        "temperatur_max": round(
+            temperatur_max,
+            1
+        ),
+        "weather_code": weather_code,
+        "niederschlag_wahrscheinlichkeit":
+            niederschlag_wahrscheinlichkeit,
+        "wettertext": wettertext(
+            weather_code,
+            1
+        ),
+        "modell": modell
+    }
+def aktuelle_wetterdaten(lat, lon):
+
+    url = (
+        "https://api.open-meteo.com/v1/forecast"
+        f"?latitude={lat}"
+        f"&longitude={lon}"
+        "&current=temperature_2m,relative_humidity_2m,"
+        "apparent_temperature,is_day,precipitation,"
+        "weather_code,wind_speed_10m,wind_gusts_10m,surface_pressure"
+        "&timezone=Europe%2FBerlin"
+    )
+
+    antwort = requests.get(
+        url,
+        timeout=30,
+        headers={
+            "User-Agent": "Wetterstudio-Bad-Feilnbach-AI"
         }
+    )
 
+    antwort.raise_for_status()
 
+    current = antwort.json().get("current", {})
 
+    weather_code = current.get("weather_code", 0)
+    is_day = current.get("is_day", 1)
 
-
-
-
-
-
+    return {
+        "temperatur": current.get("temperature_2m"),
+        "gefuehlt": current.get("apparent_temperature"),
+        "luftfeuchtigkeit": current.get("relative_humidity_2m"),
+        "niederschlag": current.get("precipitation"),
+        "wind": current.get("wind_speed_10m"),
+        "boeen": current.get("wind_gusts_10m"),
+        "luftdruck": current.get("surface_pressure"),
+        "wettercode": weather_code,
+        "wettertext": wettertext(
+            weather_code,
+            is_day
+        )
+    }
 
