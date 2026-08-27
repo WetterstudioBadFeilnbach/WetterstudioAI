@@ -49,7 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             let icon = "❔";
 
-            switch (wetter.wettercode) {
+            switch (Number(wetter.wettercode)) {
 
                 case 0:
                     icon = "☀️";
@@ -159,7 +159,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             let icon = "❔";
 
-            switch (wetter.wettercode) {
+            switch (Number(wetter.wettercode)) {
 
                 case 0:
                     icon = "☀️";
