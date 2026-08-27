@@ -143,6 +143,18 @@ def aktuelle_wetterdaten(lat=48.0, lon=11.8):
                 "daily": {},
             }
 
+        if antwort.status_code != 200:
+            print(
+                "OPENMETEO-ANTWORT-STATUS:",
+                antwort.status_code,
+                flush=True
+            )
+            print(
+                "OPENMETEO-ANTWORT-TEXT:",
+                antwort.text[:1000],
+                flush=True
+            )
+
         antwort.raise_for_status()
 
         daten = antwort.json()
@@ -250,5 +262,6 @@ def aktuelle_wetterdaten(lat=48.0, lon=11.8):
             "wettertext": "Wetterdaten vorübergehend nicht verfügbar",
             "daily": {},
         }
+
 
 
