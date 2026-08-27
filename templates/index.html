@@ -1979,6 +1979,111 @@ document.addEventListener(
 <script src="/static/js/alarm.js"></script>
 <script src="/static/js/feedback.js"></script>
 
+<script>
+document.addEventListener("DOMContentLoaded", async function () {
+    try {
+        const response = await fetch(
+            "/api/wetter?lat=47.7868&lon=12.0094&landkreis=Bad%20Feilnbach",
+            { cache: "no-store" }
+        );
+
+        if (!response.ok) {
+            throw new Error("HTTP " + response.status);
+        }
+
+        const wetter = await response.json();
+
+        document.getElementById("ort").textContent =
+            wetter.ort || "Bad Feilnbach";
+
+        document.getElementById("temperatur").textContent =
+            wetter.temperatur + " °C";
+
+        document.getElementById("wettertext").textContent =
+            wetter.wettertext || "--";
+
+        let icon = "❔";
+
+        switch (Number(wetter.wettercode)) {
+            case 0:
+                icon = "☀️";
+                break;
+            case 1:
+            case 2:
+                icon = "🌤️";
+                break;
+            case 3:
+                icon = "☁️";
+                break;
+            case 45:
+            case 48:
+                icon = "🌫️";
+                break;
+            case 51:
+            case 53:
+            case 55:
+            case 56:
+            case 57:
+                icon = "🌦️";
+                break;
+            case 61:
+            case 63:
+            case 65:
+            case 66:
+            case 67:
+                icon = "🌧️";
+                break;
+            case 71:
+            case 73:
+            case 75:
+            case 77:
+                icon = "❄️";
+                break;
+            case 80:
+            case 81:
+            case 82:
+                icon = "🌦️";
+                break;
+            case 95:
+            case 96:
+            case 99:
+                icon = "⛈️";
+                break;
+        }
+
+        document.getElementById("wettericon").textContent = icon;
+
+        document.getElementById("wind").textContent =
+            wetter.wind + " km/h";
+
+        document.getElementById("boeen").textContent =
+            wetter.boeen + " km/h";
+
+        document.getElementById("regen").textContent =
+            wetter.niederschlag + " mm";
+
+        document.getElementById("luftdruck").textContent =
+            wetter.luftdruck != null
+                ? wetter.luftdruck + " hPa"
+                : "—";
+
+        document.getElementById("luftfeuchte").textContent =
+            wetter.luftfeuchtigkeit + " %";
+
+        document.getElementById("gefuehlt").textContent =
+            wetter.gefuehlt + " °C";
+
+        console.log("Initiale Wetterdaten geladen:", wetter);
+
+    } catch (error) {
+        console.error(
+            "Fehler beim initialen Laden der Wetterdaten:",
+            error
+        );
+    }
+});
+</script>
+
 </body>
 </html>
 
