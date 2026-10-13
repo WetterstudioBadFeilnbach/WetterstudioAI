@@ -149,6 +149,15 @@ async def api_wetter(
 print(">>> STARTSEITE WIRD AUS MAIN.PY GELADEN <<<")
 
 
+
+@app.get("/wetterkarten", response_class=HTMLResponse)
+async def wetterkarten_seite(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="wetterkarten.html",
+        context={}
+    )
+
 @app.get("/")
 async def startseite(request: Request):
 

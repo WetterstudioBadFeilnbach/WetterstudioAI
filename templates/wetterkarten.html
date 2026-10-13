@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bayern-Wetterkarten | Wetterstudio Bad Feilnbach AI</title>
+<style>
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #eaf6ff, #c5e3f7);
+    color: #17364e;
+}
+header {
+    background: #164d78;
+    color: white;
+    padding: 22px;
+    text-align: center;
+}
+header h1 { margin: 0 0 8px; }
+main {
+    max-width: 1200px;
+    margin: 30px auto;
+    padding: 0 16px;
+}
+.panel {
+    background: white;
+    padding: 22px;
+    border-radius: 16px;
+    box-shadow: 0 5px 20px #164d7820;
+}
+.controls {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-bottom: 22px;
+}
+.controls label {
+    font-weight: bold;
+}
+select {
+    display: block;
+    margin-top: 8px;
+    padding: 12px;
+    min-width: 200px;
+    border: 1px solid #9bbcd4;
+    border-radius: 8px;
+    font-size: 16px;
+}
+#karte {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+}
+#meldung {
+    padding: 15px;
+    text-align: center;
+}
+.download {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 14px 24px;
+    border-radius: 9px;
+    background: #17679b;
+    color: white;
+    font-weight: bold;
+    text-decoration: none;
+}
+.download:hover { background: #104b72; }
+.zurueck {
+    display: inline-block;
+    margin: 18px 0;
+    color: #164d78;
+    font-weight: bold;
+}
+footer {
+    text-align: center;
+    padding: 25px 12px;
+    font-size: 14px;
+}
+</style>
+</head>
+<body>
+
+<header>
+    <h1>🗺️ Bayern-Wetterkarten</h1>
+    <p>Wetterstudio Bad Feilnbach AI – 7-Tage-Wetterübersicht</p>
+</header>
+
+<main>
+    <a class="zurueck" href="/">← Zurück zur Startseite</a>
+
+    <section class="panel">
+        <div class="controls">
+            <label>
+                Datum auswählen
+                <select id="datum"></select>
+            </label>
+
+            <label>
+                Wetterkarte auswählen
+                <select id="modus">
+                    <option value="tag">☀️ Tageswetter</option>
+                    <option value="nacht">🌙 Nachtwetter</option>
+                </select>
+            </label>
+        </div>
+
+        <div id="meldung">Wetterkarte wird geladen ...</div>
+        <img id="karte" alt="Bayern-Wetterkarte" hidden>
+
+        <a id="download" class="download" hidden>
+            📥 Wetterkarte als PNG herunterladen
+        </a>
+    </section>
+</main>
+
+<footer>
+    Quelle: Wetterstudio AI – Wetterstudio Bad Feilnbach<br>
+    Wettermodelldaten: Open-Meteo / ECMWF / ICON<br>
+    © Markus Michels – Wetter Studio AI
+</footer>
+
+<script>
+const datumAuswahl = document.getElementById("datum");
+const modusAuswahl = document.getElementById("modus");
+const bild = document.getElementById("karte");
+const download = document.getElementById("download");
+const meldung = document.getElementById("meldung");
+
+const heute = new Date();
+const basis = new Date(
+    heute.getFullYear(),
+    heute.getMonth(),
+    heute.getDate()
+);
+
+function datumText(d) {
+    const jahr = d.getFullYear();
+    const monat = String(d.getMonth() + 1).padStart(2, "0");
+    const tag = String(d.getDate()).padStart(2, "0");
+    return `${jahr}-${monat}-${tag}`;
+}
+
+for (let i = 0; i < 7; i++) {
+    const d = new Date(basis);
+    d.setDate(basis.getDate() + i);
+
+    const option = document.createElement("option");
+    option.value = datumText(d);
+    option.textContent = d.toLocaleDateString("de-DE", {
+        weekday: "long",
+        day: "2-digit",
+        month: "long",
+        year: "numeric"
+    });
+
+    datumAuswahl.appendChild(option);
+}
+
+function karteLaden() {
+    const datum = datumAuswahl.value;
+    const modus = modusAuswahl.value;
+    const dateiname = `bayern_${datum}_${modus}.png`;
+    const pfad = `/static/wetterkarten/${dateiname}`;
+
+    bild.hidden = true;
+    download.hidden = true;
+    meldung.hidden = false;
+    meldung.textContent = "Wetterkarte wird geladen ...";
+
+    bild.onload = function() {
+        meldung.hidden = true;
+        bild.hidden = false;
+        download.href = pfad;
+        download.download = dateiname;
+        download.hidden = false;
+    };
+
+    bild.onerror = function() {
+        bild.hidden = true;
+        download.hidden = true;
+        meldung.hidden = false;
+        meldung.textContent =
+            "Für dieses Datum ist noch keine Wetterkarte verfügbar.";
+    };
+
+    bild.src = pfad;
+}
+
+datumAuswahl.addEventListener("change", karteLaden);
+modusAuswahl.addEventListener("change", karteLaden);
+
+karteLaden();
+</script>
+
+</body>
+</html>
