@@ -1,0 +1,51 @@
+name: Bayern-Wetterkarten taeglich
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 2 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bayern-wetterkarten
+  cancel-in-progress: false
+
+jobs:
+  wetterkarten:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Repository laden
+        uses: actions/checkout@v4
+        with:
+          ref: public-beta-stable
+
+      - name: Python einrichten
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Bibliotheken installieren
+        run: python -m pip install -r requirements-wetterkarten.txt
+
+      - name: Wetterkarten erzeugen
+        env:
+          MPLBACKEND: Agg
+          PYTHONPATH: .
+          TZ: Europe/Berlin
+        run: python -m scripts.aktualisiere_wetterkarten
+
+      - name: Wetterkarten speichern
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- static/wetterkarten/bayern_*.png
+          if git diff --cached --quiet; then
+            echo "Keine neuen Wetterkarten vorhanden."
+          else
+            git commit -m "Automatische Bayern-Wetterkarten aktualisiert"
+            git push origin HEAD:public-beta-stable
+          fi
