@@ -4,6 +4,7 @@ Keine Ersatz- oder Testwerte. Nacht ist dem Abenddatum zugeordnet.
 from collections import Counter
 from datetime import date, datetime, timedelta
 from functools import lru_cache
+import time
 import requests
 
 MODELLE = {"best_match": .25, "ecmwf_ifs": .40, "icon_global": .35}
@@ -16,12 +17,21 @@ def _datum(d):
 
 @lru_cache(maxsize=256)
 def _hole_stunden(lat, lon, modell):
-    antwort = requests.get(URL, params={
-        "latitude": lat, "longitude": lon, "models": modell,
-        "hourly": "temperature_2m,weather_code,precipitation_probability,precipitation",
-        "forecast_days": 10, "timezone": "Europe/Berlin",
-    }, timeout=30, headers={"User-Agent": "Wetterstudio-Bad-Feilnbach-AI"})
-    antwort.raise_for_status()
+    for versuch in range(1, 4):
+        try:
+            antwort = requests.get(URL, params={
+                "latitude": lat, "longitude": lon, "models": modell,
+                "hourly": "temperature_2m,weather_code,precipitation_probability,precipitation",
+                "forecast_days": 10, "timezone": "Europe/Berlin",
+            }, timeout=30, headers={"User-Agent": "Wetterstudio-Bad-Feilnbach-AI"})
+            antwort.raise_for_status()
+            break
+        except (requests.Timeout, requests.ConnectionError):
+            if versuch == 3:
+                raise
+            wartezeit = 5 * versuch
+            print(f"Open-Meteo {modell}: Versuch {versuch} fehlgeschlagen, neuer Versuch in {wartezeit} Sekunden.", flush=True)
+            time.sleep(wartezeit)
     daten = antwort.json().get("hourly", {})
     zeiten = daten.get("time", [])
     if not zeiten:
