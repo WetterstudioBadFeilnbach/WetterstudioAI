@@ -32,7 +32,7 @@ FEATURES = {
     "Webcam": True,
     "HND-Lagekarte": True,
     "KI-Wetterberichte": False,
-    "Wetterkarten-Generator": False,
+    "Wetterkarten-Generator": True,
     "TV-Modus": False,
     "Favoriten": False,
     "Smartphone-Version": False,

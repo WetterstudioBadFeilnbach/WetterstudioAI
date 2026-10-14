@@ -113,6 +113,7 @@
         <li>🗣 Sprachansagen für neue DWD-Warnungen</li>
         <li>🔊 Alarm-Einstellungen (Ton / Sprache)</li>
         <li>📖 Verbesserte Warnungs-Legende</li>
+        <li>🗺️ Bayern-Wetterkarten – 7 Tage Tages- und Nachtwetter, täglich automatisch aktualisiert</li>
     </ul>
 
     <h4>🌊 Hochwasserportal</h4>
@@ -137,7 +138,7 @@
         <li>🛰 Satellitenbilder</li>
         <li>🌧 Erweiterte Niederschlagsauswertung</li>
         <li>⛈ Unwetter-Prognosen</li>
-        <li>📅 3-, 7- und 14-Tage-Trend</li>
+        <li>📅 Erweiterte 3- und 7-Tage-Trends sowie 14-Tage-Bayern-Wetterkompass mit Ensemble-Auswertung</li>
         <li>🌡 Hitze- und Kältewarnungen</li>
         <li>📍 Persönliche Lieblingsorte</li>
     </ul>
@@ -148,7 +149,7 @@
         <li>📺 TV-Modus</li>
         <li>📱 Weiterer Ausbau für Smartphone und mobile Nutzung</li>
         <li>📸 Erweiterte Community-Wetterfotos</li>
-        <li>📈 Weitere Wetterstatistiken und Analysefunktionen</li>
+        <li>📈 Weitere Wetterstatistiken, Ensemble-Auswertungen und Analysefunktionen</li>
         <li>🚀 Weitere Funktionen für Wetterinteressierte und Stormchaser</li>
     </ul>
 
@@ -158,9 +159,9 @@
         <div
             id="progressBar"
             class="progress-bar"
-            data-prozent="86"
+            data-prozent="{{ entwicklung }}"
         >
-            86 %
+            {{ entwicklung }} %
         </div>
     </div>
 
@@ -170,7 +171,12 @@
 
         <div class="roadmap-item done">
             <span>✅ Version 0.9 Beta</span>
-            <small>Öffentliche Beta mit Wetter, Warnungen, Radar und Hochwasserportal</small>
+            <small>Öffentliche Beta mit Wetter, Warnungen, Radar, Hochwasserportal und Live-Wetterdaten</small>
+        </div>
+
+        <div class="roadmap-item done">
+            <span>✅ Automatische Bayern-Wetterkarten</span>
+            <small>7 Tage Tages- und Nachtwetter, täglich automatisch aktualisiert</small>
         </div>
 
         <div class="roadmap-item work">
@@ -615,10 +621,12 @@
 
         <div class="coming-soon-card">
 
-            <h3>🚧 In Entwicklung</h3>
+            <h3>🌪 Tornado-Center – Beta-Ausbau</h3>
 
             <p>
-                Dieser Bereich wird Bestandteil der öffentlichen Beta 0.9.
+                Die Anzeige von DWD-Tornadowarnungen ist bereits integriert.
+                Eine interaktive Tornado-Karte, Sichtungsmeldungen und
+                statistische Auswertungen befinden sich im weiteren Ausbau.
             </p>
 
             <div class="tornado-grid">
@@ -627,7 +635,7 @@
 
                     <h4>🌪 DWD-Tornadowarnungen</h4>
 
-                    <p>Live-Anzeige geplanter Warnungen.</p>
+                    <p>Anzeige von DWD-Tornadowarnungen, sofern entsprechende Warnungen vorliegen.</p>
 
                     {% if tornado_warnungen %}
 
