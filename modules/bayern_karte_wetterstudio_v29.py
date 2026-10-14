@@ -449,6 +449,39 @@ def erstelle_bayern_karte(
         # Temperaturfelds vermeiden; ausschliesslich Symbolkorrektur.
         if name in ("Rosenheim", "Kempten") and wetter_symbole:
             symbol_p = (symbol_p[0], symbol_p[1] - 4)
+        # Nachtwetter: Mond/Stern mit etwas mehr Abstand zum Ortsnamen.
+        # Temperaturfelder nur minimal mitnehmen, damit alles kompakt bleibt.
+        nacht_korrekturen = {
+            "Bayreuth": (8, 5),
+            "Ansbach": (7, 4),
+            "Coburg": (5, 3),
+            "Schweinfurt": (4, 2),
+            "Landshut": (5, 3),
+            "Augsburg": (4, 2),
+            "Ingolstadt": (4, 2),
+            "München": (4, 2),
+        }
+        if modus == "Nachtwetter" and wetter_symbole:
+            symbol_dy, temp_dy = nacht_korrekturen.get(name, (0, 0))
+            symbol_p = (symbol_p[0], symbol_p[1] + symbol_dy)
+            temp_p = (temp_p[0], temp_p[1] + temp_dy)
+
+        # Nachtwetter: gezielte Feinkorrektur nach dem 20-Staedte-Test.
+        # Nur diese fuenf Orte; alle anderen Positionen bleiben erhalten.
+        nacht_feinkorrektur = {
+            "Hof": (0, 11, 0, 6),
+            "Bayreuth": (0, 5, 0, 3),
+            "Regen": (-5, 9, 0, 6),
+            "Passau": (-12, 9, 0, 6),
+            "Rosenheim": (0, 6, 0, 3),
+            "Ansbach": (0, 4, 0, 4),
+            "Kempten": (0, 4, 0, 4),
+        }
+        if modus == "Nachtwetter" and wetter_symbole:
+            sx, sy, tx, ty = nacht_feinkorrektur.get(name, (0, 0, 0, 0))
+            symbol_p = (symbol_p[0] + sx, symbol_p[1] + sy)
+            temp_p = (temp_p[0] + tx, temp_p[1] + ty)
+
         if wetter_symbole:
             zeichne_wettersymbol(
                 achse, lon, lat, wetter_typ,
