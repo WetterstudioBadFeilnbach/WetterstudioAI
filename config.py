@@ -4,7 +4,7 @@ FEATURES = {
     "FastAPI": True,
     "DWD-Warnungen": True,
     "Deutschlandkarte": True,
-    "Landkreissuche": True,
+    "Landkreissuche": False,
     "Radar": True,
     "Live-Wetterdaten": True,
     "Wind": True,
@@ -36,5 +36,11 @@ FEATURES = {
     "TV-Modus": False,
     "Favoriten": False,
     "Smartphone-Version": False,
+    "Bayern-Wetterkarten": True,
+    "Automatische Wetterkarten-Aktualisierung": True,
+    "14-Tage-Bayern-Wetterkompass": True,
+    "Wetterkompass-PNG-Downloads": True,
+    "Wetterkompass-Automatik": True,
 }
+
 

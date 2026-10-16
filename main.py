@@ -148,11 +148,11 @@ async def api_wetter(
 
 print(">>> STARTSEITE WIRD AUS MAIN.PY GELADEN <<<")
 
+
+
 @app.get("/wetterkompass", response_class=HTMLResponse)
 async def wetterkompass_seite(request: Request):
     return templates.TemplateResponse(request=request, name="wetterkompass.html", context={})
-
-
 
 @app.get("/wetterkarten", response_class=HTMLResponse)
 async def wetterkarten_seite(request: Request):
@@ -219,11 +219,18 @@ async def startseite(request: Request):
 
 
     # Entwicklungsstand
-    gesamt = len(FEATURES)
+    # Spaetere Erweiterungen zaehlen nicht zum aktuellen Beta-Fortschritt.
+    spaetere_erweiterungen = {"TV-Modus", "Favoriten"}
+    beta_features = {
+        name: status
+        for name, status in FEATURES.items()
+        if name not in spaetere_erweiterungen
+    }
+    gesamt = len(beta_features)
 
     fertig = sum(
         1
-        for status in FEATURES.values()
+        for status in beta_features.values()
         if status
     )
 
