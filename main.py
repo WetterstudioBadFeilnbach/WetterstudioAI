@@ -148,6 +148,10 @@ async def api_wetter(
 
 print(">>> STARTSEITE WIRD AUS MAIN.PY GELADEN <<<")
 
+@app.get("/wetterkompass", response_class=HTMLResponse)
+async def wetterkompass_seite(request: Request):
+    return templates.TemplateResponse(request=request, name="wetterkompass.html", context={})
+
 
 
 @app.get("/wetterkarten", response_class=HTMLResponse)
