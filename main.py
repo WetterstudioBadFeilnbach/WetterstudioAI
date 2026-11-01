@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI, Request, Query, Body, HTTPException, Depends
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -33,9 +34,7 @@ app = FastAPI(title="Wetterstudio Bad Feilnbach AI")
 security = HTTPBasic()
 
 ADMIN_BENUTZER = "admin"
-ADMIN_PASSWORT = "@@@MarkusMichels!23tpEG25"
-
-
+ADMIN_PASSWORT = os.environ["ADMIN_PASSWORT"]
 # Statische Dateien
 app.mount(
     "/static",
