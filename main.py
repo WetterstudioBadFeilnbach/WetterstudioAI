@@ -552,3 +552,12 @@ async def admin_feedback(
     return HTMLResponse(
         content=html
     )
+
+# Öffentliche Datenschutzerklärung für das Quaxi-Wetterquiz
+@app.get("/datenschutz-quaxi", response_class=HTMLResponse)
+async def datenschutz_quaxi(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="datenschutz-quaxi.html",
+        context={}
+    )
